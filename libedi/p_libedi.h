@@ -30,6 +30,10 @@
 #ifndef P_LIBEDI_H_
 # define P_LIBEDI_H_                   1
 
+#ifdef _MSC_VER
+# include "../win32/msvcfix.h"
+#endif
+
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
