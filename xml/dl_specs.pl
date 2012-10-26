@@ -25,6 +25,8 @@ foreach my $file(@{ $mainzip->files }) {
 	print "Extracting archive $file into $dir\n";
 	mkdir $dir;
 	Archive::Extract->new(archive => $file)->extract(to => $dir) or die "Can't extract $file into $dir";
+} continue {
+	unlink $file;
 }
 
 

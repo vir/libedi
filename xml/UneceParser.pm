@@ -76,7 +76,7 @@ sub load_composites_file
 			$lasttextref = \$comp->{function};
 		} elsif(/^(\d+)\s+(?:$change_sign\s+)?(\d{4})\s+(\w.*?)\s+([MC])\s+(a?n?(?:\.\.)?\d*)\s*$/) { # element
 #			push @{$comp->{elements}}, [$1, $2, $3, $4];
-			push @{$comp->{elements}}, "$2 $4";
+			push @{$comp->{elements}}, "$4$2";
 			$lasttextref = \$unused;
 		} elsif(/^\s+Note:\s*(.*?)\s*$/) {
 			$comp->{note} = $1;
