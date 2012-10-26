@@ -1,0 +1,14 @@
+*.obj
+libedistruct/unsl
+libedistruct/edcd
+libedistruct/eded
+libedistruct/edmd
+libedistruct/edsd
+libedistruct/idcd
+libedistruct/idmd
+libedistruct/idsd
+libedistruct/part2
+libedistruct/part3
+libedistruct/part4
+libedistruct/uncl
+
