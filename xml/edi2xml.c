@@ -1,0 +1,170 @@
+#include <stdio.h>
+#include <malloc.h>
+#include <string.h>
+#include "libedi.h"
+#include "edistruct.h"
+
+char * load_whole_file(const char * fname)
+{
+	long len;
+	char * buf;
+	FILE* f = fopen(fname, "rt");
+	if(! f)
+	{
+		perror("fopen");
+		return NULL;
+	}
+	fseek(f, 0, SEEK_END);
+	len = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	buf = malloc(len + 1);
+	if(! buf)
+	{
+		perror("malloc");
+		fclose(f);
+		return NULL;
+	}
+	len = fread(buf, 1, len, f);
+	buf[len] = '\0';
+	fclose(f);
+	return buf;
+}
+
+void element_to_xml(const char * name, const char * val)
+{
+	printf("<e-%s>%s</e-%s>\n", name, val, name);
+}
+
+void element_missing_xml(const char * name)
+{
+	printf("<!-- [%s] -->\n", name);
+}
+
+void segment_to_xml(edi_segment_t * seg)
+{
+	size_t data_element_index;
+	size_t i, data_child_index;
+	const edistruct_segment_t * sstruct;
+
+	/* load structure desctiption */
+	sstruct = find_edistruct_segment(seg->tag);
+	if(! sstruct) /* fallback */
+	{
+		printf("<!-- Unknown segment %s -->", seg->tag);
+		return;
+	}
+
+	/* get first data element index */
+	data_element_index = 0;
+	if(seg->elements[data_element_index].type == 'S' && 0 == strcmp(seg->elements[data_element_index].simple.value, seg->tag))
+		++data_element_index;
+
+	printf("<S:%s><!-- %s -->\n", sstruct->title2, sstruct->name);
+
+	/* check all possible chldren */
+	for(i = 0; sstruct->children[i]; ++i)
+	{
+		const char * s;
+		int is_optional, is_composite;
+		s = sstruct->children[i];
+		is_optional = s[0] == 'C';
+		is_composite = s[1] == 'C';
+
+		if(data_element_index >= seg->nelements)
+		{
+			if(is_optional)
+				continue;
+			else
+			{
+				printf("ERROR - mandatory element %s is missing", s);
+				break;
+			}
+		}
+
+		if(seg->elements[data_element_index].type != (is_composite ? 'C' : 'S'))
+		{
+			if(is_optional)
+			{
+				element_missing_xml(s+1);
+				continue;
+			}
+			else
+			{
+				printf("ERROR - mandatory element %s is missing", s);
+				break;
+			}
+		}
+
+		if(is_composite)
+		{
+			size_t j;
+			edi_element_t * el;
+			const edistruct_composite_t * cstruct;
+
+			cstruct = find_edistruct_composite(s + 1);
+			el = &seg->elements[data_element_index];
+
+			printf("<C:%s><!-- %s -->\n", cstruct->title2, s);
+			for(j = 0; cstruct->children[j]; ++j)
+			{
+				if(j < el->composite.nvalues && el->composite.valuelens[j])
+					element_to_xml(cstruct->children[j] + 1, el->composite.values[j]);
+				else
+					element_missing_xml(cstruct->children[j] + 1);
+			}
+			printf("</C:%s>\n", cstruct->title2);
+		}
+		else
+		{
+			element_to_xml(s + 1, seg->elements[data_element_index].simple.value);
+		}
+		++data_element_index;
+	}
+
+	printf("</S:%s>\n", sstruct->title2);
+}
+
+int proc_edi(const char * edi_text)
+{
+	edi_parser_t * p;
+	edi_interchange_t * ichg;
+	size_t i;
+
+	p = edi_parser_create(NULL);
+	ichg = edi_parser_parse(p, edi_text);
+
+	for(i = 0; i < ichg->nsegments; ++i)
+	{
+		edi_segment_t * seg = &ichg->segments[i];
+		const char * tag = seg->tag;
+		if(0 == strcmp(tag, "UNB")) { puts("<interchange>"); continue; }
+		if(0 == strcmp(tag, "UNZ")) { puts("</interchange>"); continue; }
+		if(0 == strcmp(tag, "UNG")) { puts("<group>"); continue; }
+		if(0 == strcmp(tag, "UNE")) { puts("</group>"); continue; }
+		if(0 == strcmp(tag, "UNH")) { puts("<message>"); continue; }
+		if(0 == strcmp(tag, "UNT")) { puts("</message>"); continue; }
+		segment_to_xml(seg);
+	}
+
+	edi_interchange_destroy(ichg);
+	edi_parser_destroy(p);
+
+	return 0;
+}
+
+int main(int argc, char * argv[])
+{
+	int r;
+	char * edi;
+	if(argc < 2)
+		return 0;
+	edi = load_whole_file(argv[1]);
+	if(! edi)
+		return 1;
+
+	r = proc_edi(edi);
+
+	free(edi);
+	return r;
+}
+

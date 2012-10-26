@@ -3,6 +3,9 @@
 extern "C" {
 #endif
 
+typedef struct edistruct_segment edistruct_segment_t;
+typedef struct edistruct_composite edistruct_composite_t;
+
 struct edistruct_segment
 {
 	const char * name;

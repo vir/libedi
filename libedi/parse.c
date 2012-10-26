@@ -262,6 +262,10 @@ edi_parser_parse(edi_parser_t *oparser, const char *message)
 		}
 		/* Move past the segment separator */
 		message++;
+#if 1 /* Can't find where is it documented, but newlines after segment separator is quite common */
+		while(*message == 0x0D || *message == 0x0A)
+			++message;
+#endif
 	}
 	return p;
 }
