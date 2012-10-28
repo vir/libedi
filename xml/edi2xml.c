@@ -30,14 +30,46 @@ char * load_whole_file(const char * fname)
 	return buf;
 }
 
+char * escape_xml(const char * src)
+{
+	return strdup(src); // XXX TODO XXX
+}
+
 void element_to_xml(const char * name, const char * val)
 {
-	printf("<e-%s>%s</e-%s>\n", name, val, name);
+	char * text;
+	const edistruct_element_t * e;
+	e = find_edistruct_element(name);
+	if(e->is_coded)
+	{
+		const edistruct_coded_t * z;
+		z = find_coded_value(name, val);
+		if(z)
+		{
+			text = malloc(strlen(z->title2) + 7);
+			sprintf(text, "<Z:%s />", z->title2);
+		}
+		else
+			text = escape_xml(val);
+	}
+	else
+		text = escape_xml(val);
+	if(e)
+		printf("<E:%s>%s</E:%s>\n", e->title2, text, e->title2);
+	else
+		printf("<E:e%s>%s</E:e%s>\n", name, text, name);
+	free(text);
 }
 
 void element_missing_xml(const char * name)
 {
-	printf("<!-- [%s] -->\n", name);
+#if 0
+	const edistruct_element_t * e = find_edistruct_element(name);
+	if(e)
+		printf("<!-- [%s: %s] -->\n", name, e->title);
+	else
+		printf("<!-- [%s] -->\n", name);
+#endif
 }
 
 void segment_to_xml(edi_segment_t * seg)
@@ -50,7 +82,7 @@ void segment_to_xml(edi_segment_t * seg)
 	sstruct = find_edistruct_segment(seg->tag);
 	if(! sstruct) /* fallback */
 	{
-		printf("<!-- Unknown segment %s -->", seg->tag);
+		printf("<!-- ERROR: Unknown segment %s -->", seg->tag);
 		return;
 	}
 
@@ -68,7 +100,7 @@ void segment_to_xml(edi_segment_t * seg)
 		int is_optional, is_composite;
 		s = sstruct->children[i];
 		is_optional = s[0] == 'C';
-		is_composite = s[1] == 'C';
+		is_composite = s[1] == 'C' || s[1] == 'S';
 
 		if(data_element_index >= seg->nelements)
 		{
@@ -76,7 +108,7 @@ void segment_to_xml(edi_segment_t * seg)
 				continue;
 			else
 			{
-				printf("ERROR - mandatory element %s is missing", s);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s);
 				break;
 			}
 		}
@@ -90,7 +122,7 @@ void segment_to_xml(edi_segment_t * seg)
 			}
 			else
 			{
-				printf("ERROR - mandatory element %s is missing", s);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s);
 				break;
 			}
 		}
@@ -137,13 +169,13 @@ int proc_edi(const char * edi_text)
 	{
 		edi_segment_t * seg = &ichg->segments[i];
 		const char * tag = seg->tag;
-		if(0 == strcmp(tag, "UNB")) { puts("<interchange>"); continue; }
-		if(0 == strcmp(tag, "UNZ")) { puts("</interchange>"); continue; }
-		if(0 == strcmp(tag, "UNG")) { puts("<group>"); continue; }
-		if(0 == strcmp(tag, "UNE")) { puts("</group>"); continue; }
-		if(0 == strcmp(tag, "UNH")) { puts("<message>"); continue; }
-		if(0 == strcmp(tag, "UNT")) { puts("</message>"); continue; }
+		if(0 == strcmp(tag, "UNB")) { puts("<X:interchange xmlns:X=\"xxxx/xchg\" xmlns:S=\"xxxx/segs\" xmlns:C=\"xxxx/comps\" xmlns:E=\"xxxx/els\" xmlns:Z=\"xxxx/codes\">"); }
+		if(0 == strcmp(tag, "UNG")) { puts("<X:group>"); }
+		if(0 == strcmp(tag, "UNH")) { puts("<X:message>"); }
 		segment_to_xml(seg);
+		if(0 == strcmp(tag, "UNZ")) { puts("</X:interchange>"); }
+		if(0 == strcmp(tag, "UNE")) { puts("</X:group>"); }
+		if(0 == strcmp(tag, "UNT")) { puts("</X:message>"); }
 	}
 
 	edi_interchange_destroy(ichg);

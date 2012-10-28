@@ -3,8 +3,8 @@ use re 'eval';
 
 sub load_segments_file
 {
-	my($fn) = @_;
-	my $r = {};
+	my($fn, $r) = @_;
+	$r ||= {};
 	my $segment;
 	my $lasttextref;
 	my $in_composite = 0;
@@ -52,8 +52,8 @@ sub load_segments_file
 
 sub load_composites_file
 {
-	my($fn) = @_;
-	my $r = {};
+	my($fn, $r) = @_;
+	$r ||= {};
 	my $comp;
 	my $lasttextref;
 	my $change_sign = qr/[\+\*\#\|X\-]/;
@@ -94,8 +94,8 @@ sub load_composites_file
 
 sub load_elements_file
 {
-	my($fn) = @_;
-	my $r = {};
+	my($fn, $r) = @_;
+	$r ||= {};
 	my $el;
 	my $lasttextref;
 	my $change_sign = qr/[\+\*\#\|X\-]/;
@@ -135,8 +135,8 @@ sub load_elements_file
 
 sub load_codes_file
 {
-	my($fn) = @_;
-	my $r = {};
+	my($fn, $r) = @_;
+	$r ||= {};
 	my $cv;
 	my $lasttextref;
 	my $change_sign = qr/[\+\*\#\|X\-]/;
@@ -202,5 +202,87 @@ sub format_to_regexp
 	return qr/$re/;
 }
 
-1;
+sub load_annexb # service segments descriptions
+{
+	my($fn, $segs, $comps, $els) = @_;
+	my $change_sign = qr/[\+\*\#\|X\-]/;
+	$segs ||= {}; $comps ||= {}; $els ||= {};
+	my($s, $c, $e);
+	open F, '<:bytes', $fn or die;
+	while(<F>) {
+		last if /^ANNEX B/;
+	}
+	my($namepos, $remarkspos, $locremarks);
+	my($lastrem, $lasttit);
+	while(<F>) {
+		last if /^ANNEX C/;
+		if(/^\s*$/) {
+			undef $lastrem;
+			undef $lasttit;
+			next;
+		}
+		$locremarks = find_remarks_col($_, $locremarks, $remarkspos) if $remarkspos;
+		my $remtext = substr($_, $locremarks, length($_) - $locremarks, '') if $locremarks && length($_) > $locremarks; # chomp it off!
+		if($remtext) {
+			$remtext =~ s/^\s+//s;
+			$remtext =~ s/\s+$//s;
+#print "$_|$remtext\n";
+		}
+#else { print(('.' x $remarkspos)."v\n"); print 'X'.$_ }
+#		print "remarkspos: $remarkspos, locremarks: $locremarks, remtext: $remtext\n";
+		if(/^=====/) {
+			undef $s;
+			undef $remarkspos;
+			undef $locremarks;
+			undef $lastrem;
+			undef $lasttit;
+		} elsif(/^ ?____/) {
+			undef $c;
+			undef $locremarks;
+			undef $lastrem;
+			undef $lasttit;
+		} elsif(/^\s*Segment: ([A-Z]{3})\, (.*?)\s*$/) {
+			$s = { name => $1, title => $2, function => $remtext||'' };
+			$lastrem = \$s->{function};
+			$lasttit = \$s->{title};
+			$segs->{$1} = $s;
+		} elsif(/^ Ref\.\s+Repr\.\s+Name\s+(?{$remarkspos = pos()})Remarks/) { # skip
+		} elsif(/^(?:$change_sign)? {0,2}([0-9]{4})\s+(a?n?(?:(?:\.\.)?\d+)?)\s+([MC])\s+(?{$namepos = pos()})(.*?)\s*$/) {
+			$e = { name => $1, format => $2, title => $4, function => $remtext||'' };
+			$lastrem = \$e->{function};
+			$lasttit = \$e->{title};
+			$els->{$1} = $e unless $els->{$1};
+			push(@{$c ? $c->{elements} : $s->{elements}}, $3.$1);
+		} elsif(/^ (S[0-9]{3})\s+([MC])\s+(.*?)\s*$/) { # composite
+			$c = { name => $1, title => $3, title2 => "c$1", function => '' };
+			$comps->{$1} = $c;
+			push(@{$s->{elements}}, $2.$1);
+		} elsif($namepos && $lasttit && /^ {$namepos}(\S.*?)\s*$/) {
+			my $tail = $1;
+			$$lasttit .= ' ' if $$lasttit =~ /\w$/s;
+			$$lasttit .= $tail;
+			if($remtext) {
+				$$lastrem .= ' ' if $$lastrem =~ /\w$/s;
+				$$lastrem .= $remtext;
+			}
+		} elsif($remtext && /^ +$/) {
+			$$lastrem .= ' '.$remtext;
+		} else {
+			print "X$_\n";
+		}
+	}
+	close F;
+}
 
+sub find_remarks_col
+{
+	my($text, $locpos, $remarkspos) = @_;
+	return undef if length($text) < $remarkspos;
+	my $maxdist = 6;
+	local $_ = substr($text, $remarkspos - $maxdist, 2 * $maxdist);
+	return $remarkspos - $maxdist + length($1) if /^(.* {2,})\S/;
+	return $remarkspos - $maxdist + length($1) if /^(.*? )[A-Z]/;
+	return $locpos;
+}
+
+1;
