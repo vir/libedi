@@ -4,6 +4,10 @@
 #include "libedi.h"
 #include "edistruct.h"
 
+static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
+	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""
+	" xmlns:E=\"http://www.ctm.ru/edi/els\" xmlns:Z=\"http://www.ctm.ru/edi/codes\"";
+
 char * load_whole_file(const char * fname)
 {
 	long len;
@@ -32,7 +36,38 @@ char * load_whole_file(const char * fname)
 
 char * escape_xml(const char * src)
 {
-	return strdup(src); // XXX TODO XXX
+	char * r;
+	size_t pos;
+	size_t len = strlen(src) + 1;
+	r = (char *)malloc(len);
+	for(pos = 0; *src; ++src)
+	{
+		switch(*src)
+		{
+		case '<':
+			len += 4;
+			r = (char *)realloc(r, len);
+			r[pos++] = '&';
+			r[pos++] = 'l';
+			r[pos++] = 't';
+			r[pos++] = ';';
+			break;
+		case '&':
+			len += 5;
+			r = (char *)realloc(r, len);
+			r[pos++] = '&';
+			r[pos++] = 'a';
+			r[pos++] = 'm';
+			r[pos++] = 'p';
+			r[pos++] = ';';
+			break;
+		default:
+			r[pos++] = *src;
+			break;
+		}
+	}
+	r[pos] = '\0';
+	return r;
 }
 
 void element_to_xml(const char * name, const char * val)
@@ -46,8 +81,20 @@ void element_to_xml(const char * name, const char * val)
 		z = find_coded_value(name, val);
 		if(z)
 		{
-			text = malloc(strlen(z->title2) + 7);
-			sprintf(text, "<Z:%s />", z->title2);
+			char * func = 0;
+			size_t len;
+			len = strlen(z->title2) + 8;
+			func = escape_xml(z->function);
+			if(func)
+				len += 8 + strlen(func);
+			text = malloc(len);
+			if(func)
+			{
+				sprintf(text, "<Z:%s /><!-- %s -->", z->title2, func);
+				free(func);
+			}
+			else
+				sprintf(text, "<Z:%s />", z->title2);
 		}
 		else
 			text = escape_xml(val);
@@ -108,7 +155,7 @@ void segment_to_xml(edi_segment_t * seg)
 				continue;
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s + 1);
 				break;
 			}
 		}
@@ -122,7 +169,7 @@ void segment_to_xml(edi_segment_t * seg)
 			}
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s + 1);
 				break;
 			}
 		}
@@ -169,7 +216,7 @@ int proc_edi(const char * edi_text)
 	{
 		edi_segment_t * seg = &ichg->segments[i];
 		const char * tag = seg->tag;
-		if(0 == strcmp(tag, "UNB")) { puts("<X:interchange xmlns:X=\"xxxx/xchg\" xmlns:S=\"xxxx/segs\" xmlns:C=\"xxxx/comps\" xmlns:E=\"xxxx/els\" xmlns:Z=\"xxxx/codes\">"); }
+		if(0 == strcmp(tag, "UNB")) { printf("<X:interchange %s>", namespaces); }
 		if(0 == strcmp(tag, "UNG")) { puts("<X:group>"); }
 		if(0 == strcmp(tag, "UNH")) { puts("<X:message>"); }
 		segment_to_xml(seg);
