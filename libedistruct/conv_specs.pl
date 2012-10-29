@@ -19,7 +19,57 @@ UneceParser::load_segments_file('edsd/EDSD.99A', $s);
 UneceParser::load_composites_file('edcd/EDCD.99A', $c);
 UneceParser::load_elements_file('eded/EDED.99A', $e);
 UneceParser::load_annexb('part4/D422.TXT', $s, $c, $e);
-#print "SEGMENTS: ".Dumper($s);
+print "SEGMENTS: ".Dumper($s);
+
+# SYNTAX AND SERVICE REPORT MESSAGE (CONTROL)
+# http://www.unece.org/trade/untdid/download/r1186.pdf
+$s->{UCI} = {
+	title => 'Interchange response',
+	function => 'To identify the subject interchange, to indicate interchange receipt, to indicate acknowledgement or rejection (action taken) of the UNA, UNB and UNZ segments, and to identify any error related to these segments. Depending on the action code, it may also indicate the action taken on the functional groups and messages within that interchange.',
+	elements => [
+		'C0020', # it is mandatory in documentation!!!
+		'MS002',
+		'MS003',
+		'M0083',
+		'C0085',
+		'C0013',
+		'CS011'
+	],
+#	note => 'This segment also occurs in the following versions of this standard: 30000, 40000, 40100',
+};
+$e->{'0013'} = {
+	title => 'Service segment tag, coded',
+	function => 'Code identifying a service segment.',
+	format => 'a3',
+#	note => 'This table also occurs in the following versions of this standard: 99A, 99B, 00A, 00B, 01A, 01B, 01C, 02A, 02B, 03A, 03B',
+}; # codes are there... strange...
+$e->{'0083'} = {
+	title => 'Action, coded',
+	function => 'A code indicating acknowledgement, or rejection (the action taken) of a subject interchange, or part of the subject interchange.',
+	format => 'an..3',
+#	note => 'This table also occurs in the following versions of this standard: 40000, 40001, 40002, 40003, 40004, 40005, 40006, 40007, 40100, 40101, 40102, 94A, 94B, 95B, 96A, 96B, 97A, 99A, 99B, 00A, 00B, 01A, 01B, 01C, 02A, 02B, 03A, 03B, D93A',
+}; # codes are there... strange...
+$e->{'0085'} = {
+	title => 'Syntax error, coded',
+	function => 'A code indicating the syntax error detected.',
+	format => 'an..3',
+#	note => 'This table also occurs in the following versions of this standard: 40000, 40001, 40002, 40003, 40004, 40005, 40006, 40007, 40100, 40101, 40102, 94A, 94B, 95B, 96A, 96B, 97A, 99A, 99B, 00A, 00B, 01A, 01B, 01C, 02A, 02B, 03A, 03B, D93A',
+}; # codes are there... strange...
+$c->{S011} = {
+	title => 'DATA ELEMENT IDENTIFICATION',
+	function => 'Identification of the position for an erroneous data element. This can be the position of a simple or composite data element in the definition of a segment or a component data element in the definition a composite data element.',
+	elements => [ 'M0098', 'C0104' ],
+};
+$e->{'0098'} = {
+	title => 'Erroneous data element position in segment',
+	function => 'The numerical count position of the simple or composite data element in error. The segment code and each following simple or composite data element defined in the segment description shall cause the count to be incremented. The segment tag has position number 1.',
+	format => 'n..3',
+};
+$e->{'0104'} = {
+	title => 'Erroneous component data element position',
+	function => 'The numerical count position of the component data element in error. Each component data element position defined in the composite data element description shall cause the count to be incremented. The count starts at 1.',
+	format => 'n..3',
+};
 
 open F, ">", "segs.c" or die;
 print F make_c_defs_segments($s, 'segment');
