@@ -137,6 +137,15 @@ void element_missing_xml(const char * name)
 		printf("<!-- [no %s] -->\n", name);
 }
 
+static int can_be_truncated(const edistruct_composite_t * c)
+{
+	size_t i;
+	for(i = 1; c->children[i]; i++)
+		if(c->children[i][0] == 'M')
+			return 0;
+	return 1;
+}
+
 void segment_to_xml(edi_segment_t * seg)
 {
 	size_t data_element_index;
@@ -164,11 +173,17 @@ void segment_to_xml(edi_segment_t * seg)
 	for(i = 0; sstruct->children[i]; ++i)
 	{
 		const char * s;
+		const edistruct_composite_t * cstruct;
 		int is_optional, is_composite;
 		s = sstruct->children[i];
 		is_optional = s[0] == 'C';
 		++s;
 		is_composite = *s == 'C' || *s == 'S';
+		if(is_composite)
+			cstruct = find_edistruct_composite(s);
+		else
+			cstruct = NULL;
+
 
 		if(data_element_index >= seg->nelements)
 		{
@@ -183,15 +198,37 @@ void segment_to_xml(edi_segment_t * seg)
 
 		if(seg->elements[data_element_index].type != (is_composite ? 'C' : 'S'))
 		{
-			if(is_optional)
+			/*
+			 * Composite can be truncated so libedi parses it as simple element.
+			 * Here we try to fix this unfairness by converting element to proper type
+			 */
+			if(is_composite && can_be_truncated(cstruct))
 			{
-				element_missing_xml(s);
-				continue;
+				char ** vp;
+				size_t * lp;
+				vp = malloc(sizeof(char*) * 2);
+				lp = malloc(sizeof(size_t) * 2);
+				memset(vp, 0, sizeof(char*) * 2);
+				memset(lp, 0, sizeof(size_t) * 2);
+				*vp = seg->elements[data_element_index].simple.value;
+				*lp = seg->elements[data_element_index].simple.valuelen;
+				seg->elements[data_element_index].type = 'C';
+				seg->elements[data_element_index].composite.nvalues = 1;
+				seg->elements[data_element_index].composite.values = vp;
+				seg->elements[data_element_index].composite.valuelens = lp;
 			}
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s);
-				break;
+				if(is_optional)
+				{
+					element_missing_xml(s);
+					continue;
+				}
+				else
+				{
+					printf("<!-- ERROR: mandatory element %s is missing -->", s);
+					break;
+				}
 			}
 		}
 
@@ -199,9 +236,7 @@ void segment_to_xml(edi_segment_t * seg)
 		{
 			size_t j;
 			edi_element_t * el;
-			const edistruct_composite_t * cstruct;
 
-			cstruct = find_edistruct_composite(s);
 			el = &seg->elements[data_element_index];
 
 			if(opts.comments_element_names)
