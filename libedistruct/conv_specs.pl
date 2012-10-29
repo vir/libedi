@@ -27,9 +27,10 @@ $s->{UCI} = {
 	title => 'Interchange response',
 	function => 'To identify the subject interchange, to indicate interchange receipt, to indicate acknowledgement or rejection (action taken) of the UNA, UNB and UNZ segments, and to identify any error related to these segments. Depending on the action code, it may also indicate the action taken on the functional groups and messages within that interchange.',
 	elements => [
-		'C0020', # it is mandatory in documentation!!!
+#		'M0020', # it is mandatory in documentation!!! but in "translated documentation" it is absend.
 		'MS002',
 		'MS003',
+		'M0020', # in unice docs it is absend, but present in "translated documentation"...
 		'M0083',
 		'C0085',
 		'C0013',

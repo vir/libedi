@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+# include "../win32/msvcfix.h"
+#endif
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
@@ -7,6 +10,13 @@
 static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
 	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""
 	" xmlns:E=\"http://www.ctm.ru/edi/els\" xmlns:Z=\"http://www.ctm.ru/edi/codes\"";
+
+struct {
+	int comments_segment_names:1;
+	int comments_coded_values:1;
+	int comments_element_names:1;
+	int translate_coded_values:1;
+} opts;
 
 char * load_whole_file(const char * fname)
 {
@@ -74,55 +84,63 @@ void element_to_xml(const char * name, const char * val)
 {
 	char * text;
 	const edistruct_element_t * e;
+	if(opts.comments_element_names)
+		printf("<!-- %s -->\n", name);
 	e = find_edistruct_element(name);
+	if(! e)
+	{
+		printf("<!-- ERROR: unknown element %s -->\n", name);
+		return;
+	}
+	printf("<E:%s>", e->title2);
+	text = NULL;
 	if(e->is_coded)
 	{
 		const edistruct_coded_t * z;
 		z = find_coded_value(name, val);
 		if(z)
 		{
-			char * func = 0;
 			size_t len;
-			len = strlen(z->title2) + 8;
-			func = escape_xml(z->function);
-			if(func)
-				len += 8 + strlen(func);
-			text = malloc(len);
-			if(func)
+
+			if(opts.comments_coded_values)
+				printf("<!-- %s: %s, %s -->", val, z->title, z->function);
+
+			if(opts.translate_coded_values)
 			{
-				sprintf(text, "<Z:%s /><!-- %s -->", z->title2, func);
-				free(func);
-			}
-			else
+				len = strlen(z->title2) + 8;
+				text = malloc(len);
 				sprintf(text, "<Z:%s />", z->title2);
+			}
 		}
-		else
-			text = escape_xml(val);
 	}
-	else
+
+	if(! text)
 		text = escape_xml(val);
-	if(e)
-		printf("<E:%s>%s</E:%s>\n", e->title2, text, e->title2);
-	else
-		printf("<E:e%s>%s</E:e%s>\n", name, text, name);
+
+	printf("%s</E:%s>\n", text, e->title2);
 	free(text);
 }
 
 void element_missing_xml(const char * name)
 {
-#if 0
-	const edistruct_element_t * e = find_edistruct_element(name);
+	const edistruct_element_t * e;
+	if(! opts.comments_element_names)
+		return;
+	e = find_edistruct_element(name);
 	if(e)
-		printf("<!-- [%s: %s] -->\n", name, e->title);
+	{
+		char * t = escape_xml(e->title);
+		printf("<!-- [no %s: %s] -->\n", name, t);
+		free(t);
+	}
 	else
-		printf("<!-- [%s] -->\n", name);
-#endif
+		printf("<!-- [no %s] -->\n", name);
 }
 
 void segment_to_xml(edi_segment_t * seg)
 {
 	size_t data_element_index;
-	size_t i, data_child_index;
+	size_t i;
 	const edistruct_segment_t * sstruct;
 
 	/* load structure desctiption */
@@ -138,7 +156,9 @@ void segment_to_xml(edi_segment_t * seg)
 	if(seg->elements[data_element_index].type == 'S' && 0 == strcmp(seg->elements[data_element_index].simple.value, seg->tag))
 		++data_element_index;
 
-	printf("<S:%s><!-- %s -->\n", sstruct->title2, sstruct->name);
+	if(opts.comments_segment_names)
+		printf("<!-- %s -->\n", sstruct->name);
+	printf("<S:%s>\n", sstruct->title2);
 
 	/* check all possible chldren */
 	for(i = 0; sstruct->children[i]; ++i)
@@ -147,7 +167,8 @@ void segment_to_xml(edi_segment_t * seg)
 		int is_optional, is_composite;
 		s = sstruct->children[i];
 		is_optional = s[0] == 'C';
-		is_composite = s[1] == 'C' || s[1] == 'S';
+		++s;
+		is_composite = *s == 'C' || *s == 'S';
 
 		if(data_element_index >= seg->nelements)
 		{
@@ -155,7 +176,7 @@ void segment_to_xml(edi_segment_t * seg)
 				continue;
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s + 1);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s);
 				break;
 			}
 		}
@@ -164,12 +185,12 @@ void segment_to_xml(edi_segment_t * seg)
 		{
 			if(is_optional)
 			{
-				element_missing_xml(s+1);
+				element_missing_xml(s);
 				continue;
 			}
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s + 1);
+				printf("<!-- ERROR: mandatory element %s is missing -->", s);
 				break;
 			}
 		}
@@ -180,10 +201,12 @@ void segment_to_xml(edi_segment_t * seg)
 			edi_element_t * el;
 			const edistruct_composite_t * cstruct;
 
-			cstruct = find_edistruct_composite(s + 1);
+			cstruct = find_edistruct_composite(s);
 			el = &seg->elements[data_element_index];
 
-			printf("<C:%s><!-- %s -->\n", cstruct->title2, s);
+			if(opts.comments_element_names)
+				printf("<!-- %s -->", s);
+			printf("<C:%s>\n", cstruct->title2);
 			for(j = 0; cstruct->children[j]; ++j)
 			{
 				if(j < el->composite.nvalues && el->composite.valuelens[j])
@@ -195,7 +218,7 @@ void segment_to_xml(edi_segment_t * seg)
 		}
 		else
 		{
-			element_to_xml(s + 1, seg->elements[data_element_index].simple.value);
+			element_to_xml(s, seg->elements[data_element_index].simple.value);
 		}
 		++data_element_index;
 	}
@@ -237,6 +260,11 @@ int main(int argc, char * argv[])
 	char * edi;
 	if(argc < 2)
 		return 0;
+
+	memset(&opts, 0xFF, sizeof(opts));
+	opts.comments_element_names = 0;
+	opts.translate_coded_values = 0;
+
 	edi = load_whole_file(argv[1]);
 	if(! edi)
 		return 1;
