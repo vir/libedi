@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+use utf8;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -70,6 +70,57 @@ $e->{'0104'} = {
 	title => 'Erroneous component data element position',
 	function => 'The numerical count position of the component data element in error. Each component data element position defined in the composite data element description shall cause the count to be incremented. The count starts at 1.',
 	format => 'n..3',
+};
+$s->{UCM} = {
+	title => 'MESSAGE RESPONSE',
+	function => 'To identify a message in the subject interchange, and to indicate that message\'s acknowledgement or rejection (action taken), and to identify any error related to the UNH and UNT segments.',
+	elements => [
+		'MS012', # not in pdf, in doc,
+#		'M0062', # - definetely, error in doc,
+		'MS009',
+#		'M0083', # absent in doc
+#		'C0085', # absent in doc
+#		'C0013', # absent in doc
+#		'CS011', # absent in doc
+	],
+};
+$c->{'S012'} = {
+	title => 'cS012',
+	function => '',
+	elements => [
+		'M0062',
+		'C0068',
+	],
+};
+$s->{UCS} = { # only in pdf
+	title => 'SEGMENT ERROR INDICATION',
+	function => 'To identify either a segment containing an error or a missing segment, and to identify any error related to the complete segment.',
+	elements => [ 'M0096', 'C0085' ],
+};
+$e->{'0096'} = {
+	title => 'SEGMENT POSITION IN MESSAGE',
+	function => '???',
+	format => 'n..6',
+};
+$s->{UCF} = { # only in pdf
+	title => 'FUNCTIONAL GROUP RESPONSE',
+	function => 'To identify a functional group in the subject interchange and to indicate acknowledgement or rejection (action taken) of the UNG and UNE segments, and to identify any error related to these segments. Depending on the action code, it may also indicate the action taken on the messages within that functional group.',
+	elements => [ 'M0048', 'MS006', 'MS007', 'M0083', 'C0085', 'C0013', 'CS011' ],
+};
+$s->{UCX} = { # from doc ??
+	title => 'THE LEVEL OF MESSAGE AND ERROR ON MESSAGE LEVEL',
+	function => 'Whether there is an EDIFACT, qualifier or code error in the segment is advised.',
+	elements => [ 'M0083', 'C0085' ],
+};
+$s->{UCR} = {
+	title => 'ERRONEUS SEGMENT IN MESSAGE',
+	function => 'A segment error is advised.',
+	elements => [ 'M0096', 'C0085' ],
+};
+$s->{UCD} = {
+	title => 'DATA ELEMENT ERROR INDICATION',
+	function => 'The error in a data element is advised.',
+	elements => [ 'MS011', 'C0085' ],
 };
 
 open F, ">", "segs.c" or die;
