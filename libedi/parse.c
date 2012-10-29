@@ -131,6 +131,12 @@ edi_parser_parse(edi_parser_t *oparser, const char *message)
 	edi__stringpool_get(p, strlen(message) + 1);
 	while(message && *message)
 	{
+#if 1 /* Can't find where is it documented, but newlines after segment separator is quite common */
+		while(*message == 0x0D || *message == 0x0A)
+			++message;
+		if(! *message)
+			break;
+#endif
 		if(p->nsegments + 1 > segalloc)
 		{
 			segp = (edi_segment_t *) realloc(p->segments, sizeof(edi_segment_t) * (segalloc + SEG_BLOCKSIZE));
@@ -262,10 +268,6 @@ edi_parser_parse(edi_parser_t *oparser, const char *message)
 		}
 		/* Move past the segment separator */
 		message++;
-#if 1 /* Can't find where is it documented, but newlines after segment separator is quite common */
-		while(*message == 0x0D || *message == 0x0A)
-			++message;
-#endif
 	}
 	return p;
 }
