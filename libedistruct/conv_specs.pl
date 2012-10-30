@@ -10,7 +10,7 @@ use UneceParser;
 my $z = {};
 UneceParser::load_codes_file('uncl/UNCL.99A', $z);
 UneceParser::load_codes_file('unsl/UNSL.99A', $z);
-print Dumper($z);
+#print Dumper($z);
 
 my $s = {};
 my $c = {};
@@ -19,7 +19,7 @@ UneceParser::load_segments_file('edsd/EDSD.99A', $s);
 UneceParser::load_composites_file('edcd/EDCD.99A', $c);
 UneceParser::load_elements_file('eded/EDED.99A', $e);
 UneceParser::load_annexb('part4/D422.TXT', $s, $c, $e);
-print "SEGMENTS: ".Dumper($s);
+#print "SEGMENTS: ".Dumper($s);
 
 # SYNTAX AND SERVICE REPORT MESSAGE (CONTROL)
 # http://www.unece.org/trade/untdid/download/r1186.pdf

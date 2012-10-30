@@ -36,6 +36,10 @@ export CPPFLAGS
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+AC_PATH_PROG([PERL],[perl])
+AX_PROG_PERL_VERSION([5.8.9],,AC_MSG_ERROR(Need Perl 5.8.9 or above))
+
+
 AC_ARG_ENABLE(pthread, [AS_HELP_STRING([--enable-pthread],[Use POSIX threads (default=auto)])],[use_pthread=$enableval],[use_pthread=auto])
 
 AC_MSG_CHECKING([whether to use POSIX threads])
@@ -63,7 +67,9 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
 include/Makefile
 libedi/Makefile
+libedistruct/Makefile
 tests/Makefile
+xml/Makefile
 ])
 
 AC_OUTPUT
