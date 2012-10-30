@@ -1,0 +1,3 @@
+debian/tmp/usr/lib/libedi*
+debian/tmp/usr/include/libedi*
+

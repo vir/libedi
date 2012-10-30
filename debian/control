@@ -1,0 +1,26 @@
+Source: libedi
+Section: libs
+Priority: optional
+Maintainer: Vasily i. Redkin <vir@ctm.ru>
+Build-Depends: build-essential, debhelper (>= 7)
+Standards-Version: 3.7.3
+#Homepage: http://fill-bill.ru/
+
+Package: libedi
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: EDI (???) documents parsing and building library
+
+Package: edi2xml
+Architecture: any
+Depends: libedi, ${shlibs:Depends}, ${misc:Depends}
+Description: EDI to XML converter
+
+Package: libedi-dbg
+Section: libdevel
+Architecture: any
+Depends: libedi (= ${Source-Version})
+Recommends: gdb
+Description: Debug symbols for the libedi
+
+
