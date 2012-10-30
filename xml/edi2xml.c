@@ -5,7 +5,7 @@
 #include <malloc.h>
 #include <string.h>
 #include "libedi.h"
-#include "edistruct.h"
+#include "libedistruct.h"
 
 static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
 	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""

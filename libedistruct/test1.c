@@ -1,4 +1,4 @@
-#include "edistruct.h"
+#include "libedistruct.h"
 #include <stdio.h>
 
 enum check_type { Segment, Composite };
