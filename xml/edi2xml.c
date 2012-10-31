@@ -9,10 +9,13 @@
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
+#include <iconv.h>
 
 static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
 	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""
 	" xmlns:E=\"http://www.ctm.ru/edi/els\" xmlns:Z=\"http://www.ctm.ru/edi/codes\"";
+
+iconv_t conv;
 
 struct {
 	int comments_segment_names:1;
@@ -48,10 +51,46 @@ char * load_whole_file(const char * fname)
 	return buf;
 }
 
+char * do_conv(const char * src)
+{
+	char * dst, * dstbuf;
+	size_t srclen, dstlen, r;
+	size_t srcleft, dstleft;
+	srclen = strlen(src);
+	dstlen = 2 * srclen;
+	dstbuf = (char *)malloc(dstlen + 1);
+
+	dst = dstbuf;
+	srcleft = srclen;
+	dstleft = dstlen;
+	while(dstlen < 64 * 1024 * 1024) /* sanity limit 64Mb - just in case */
+	{
+		size_t dstpos;
+		r = iconv(conv, (char**)&src, &srcleft, &dst, &dstleft);
+		if(r != (size_t)-1 && !srcleft)
+		{
+			*dst = '\0';
+			return dstbuf;
+		}
+		dstpos = dst - dstbuf;
+		dstlen += 100;
+		dstbuf = realloc(dstbuf, dstlen);
+		dstleft += 100;
+		dst += dstpos;
+	}
+	free(dstbuf);
+	return NULL;
+}
+
 char * escape_xml(const char * src)
 {
 	char * r;
 	size_t pos;
+	char * converted;
+	if(conv != (iconv_t)-1)
+		src = converted = do_conv(src);
+	else
+		converted = NULL;
 	size_t len = strlen(src) + 1;
 	r = (char *)malloc(len);
 	for(pos = 0; *src; ++src)
@@ -81,6 +120,8 @@ char * escape_xml(const char * src)
 		}
 	}
 	r[pos] = '\0';
+	if(converted)
+		free(converted);
 	return r;
 }
 
@@ -290,6 +331,9 @@ int proc_edi(const char * edi_text)
 	p = edi_parser_create(NULL);
 	ichg = edi_parser_parse(p, edi_text);
 
+	if(conv != (iconv_t)-1)
+		puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+
 	for(i = 0; i < ichg->nsegments; ++i)
 	{
 		edi_segment_t * seg = &ichg->segments[i];
@@ -317,6 +361,7 @@ void help()
 	puts("\t-c [s][e][c] : turn on xml comments for segment names, element names and coded values respectively.");
 	puts("\t-d : translate coded values");
 	puts("\t-e : translate coded values into empty elements (implies -d)");
+	puts("\t-x CHARSET : decode strings from given charset");
 }
 
 int main(int argc, char * argv[])
@@ -326,8 +371,9 @@ int main(int argc, char * argv[])
 	char * edi;
 
 	memset(&opts, 0, sizeof(opts));
+	conv = (iconv_t)-1;
 
-	while((ch = getopt(argc, argv, "?hc:de")) != -1) {
+	while((ch = getopt(argc, argv, "?hc:dex:")) != -1) {
 		switch (ch) {
 			case 'c':
 				while(*optarg)
@@ -346,6 +392,11 @@ int main(int argc, char * argv[])
 				opts.translate_coded_to_elements = 1;
 			case 'd':
 				opts.translate_coded_values = 1;
+				break;
+			case 'x':
+				conv = iconv_open("UTF-8", optarg);
+				if(conv == (iconv_t)-1)
+					perror("iconv_open");
 				break;
 			case 'h':
 			case '?':
