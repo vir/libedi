@@ -87,11 +87,12 @@ char * escape_xml(const char * src)
 	char * r;
 	size_t pos;
 	char * converted;
+	size_t len;
 	if(conv != (iconv_t)-1)
 		src = converted = do_conv(src);
 	else
 		converted = NULL;
-	size_t len = strlen(src) + 1;
+	len = strlen(src) + 1;
 	r = (char *)malloc(len);
 	for(pos = 0; *src; ++src)
 	{
@@ -421,6 +422,8 @@ int main(int argc, char * argv[])
 	r = proc_edi(edi);
 
 	free(edi);
+	if(conv != (iconv_t)-1)
+		iconv_close(conv);
 	return r;
 }
 
