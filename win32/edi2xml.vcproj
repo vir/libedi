@@ -331,6 +331,10 @@
 				RelativePath="..\xml\edi2xml.c"
 				>
 			</File>
+			<File
+				RelativePath=".\wingetopt.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -339,6 +343,10 @@
 			>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\wingetopt.h"
 				>
 			</File>
 		</Filter>

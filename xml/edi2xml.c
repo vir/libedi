@@ -1,5 +1,8 @@
 #ifdef _MSC_VER
 # include "../win32/msvcfix.h"
+# include "../win32/wingetopt.h"
+#else
+# include <unistd.h> /* for getopt */
 #endif
 #include <stdio.h>
 #include <malloc.h>
@@ -16,6 +19,7 @@ struct {
 	int comments_coded_values:1;
 	int comments_element_names:1;
 	int translate_coded_values:1;
+	int translate_coded_to_elements:1;
 } opts;
 
 char * load_whole_file(const char * fname)
@@ -80,6 +84,39 @@ char * escape_xml(const char * src)
 	return r;
 }
 
+char * coded_to_xml(const char * name, const char * val)
+{
+	size_t len;
+	const edistruct_coded_t * z;
+	char * text;
+
+	z = find_coded_value(name, val);
+	if(! z)
+		return NULL;
+
+	if(opts.comments_coded_values)
+		printf("<!-- %s: %s, %s -->", val, z->title, z->function);
+
+	if(! opts.translate_coded_values)
+		return NULL;
+
+	if(opts.translate_coded_to_elements)
+	{
+		len = strlen(z->title2) + 8;
+		text = malloc(len);
+		sprintf(text, "<Z:%s />", z->title2);
+	}
+	else
+	{
+		char * tit = escape_xml(z->title);
+		len = strlen(tit) + strlen(val) + 28;
+		text = malloc(len);
+		sprintf(text, "<X:coded code=\"%s\">%s</X:coded>", val, tit);
+		free(tit);
+	}
+	return text;
+}
+
 void element_to_xml(const char * name, const char * val)
 {
 	char * text;
@@ -95,24 +132,7 @@ void element_to_xml(const char * name, const char * val)
 	printf("<E:%s>", e->title2);
 	text = NULL;
 	if(e->is_coded)
-	{
-		const edistruct_coded_t * z;
-		z = find_coded_value(name, val);
-		if(z)
-		{
-			size_t len;
-
-			if(opts.comments_coded_values)
-				printf("<!-- %s: %s, %s -->", val, z->title, z->function);
-
-			if(opts.translate_coded_values)
-			{
-				len = strlen(z->title2) + 8;
-				text = malloc(len);
-				sprintf(text, "<Z:%s />", z->title2);
-			}
-		}
-	}
+		text = coded_to_xml(name, val);
 
 	if(! text)
 		text = escape_xml(val);
@@ -289,18 +309,61 @@ int proc_edi(const char * edi_text)
 	return 0;
 }
 
+void help()
+{
+	puts("\nUsage: edi2xml [opts] edi_file.txt > file.xml");
+	puts("Opts:");
+	puts("\t-h : this help");
+	puts("\t-c [s][e][c] : turn on xml comments for segment names, element names and coded values respectively.");
+	puts("\t-d : translate coded values");
+	puts("\t-e : translate coded values into empty elements (implies -d)");
+}
+
 int main(int argc, char * argv[])
 {
+	char ch;
 	int r;
 	char * edi;
-	if(argc < 2)
+
+	memset(&opts, 0, sizeof(opts));
+
+	while((ch = getopt(argc, argv, "?hc:de")) != -1) {
+		switch (ch) {
+			case 'c':
+				while(*optarg)
+				{
+					switch(*optarg)
+					{
+					case 's': opts.comments_segment_names = 1; break;
+					case 'e': opts.comments_element_names = 1; break;
+					case 'c': opts.comments_coded_values = 1; break;
+					default: fprintf(stderr, "Unknown comment option '%c'\n", *optarg); break;
+					}
+					++optarg;
+				}
+				break;
+			case 'e':
+				opts.translate_coded_to_elements = 1;
+			case 'd':
+				opts.translate_coded_values = 1;
+				break;
+			case 'h':
+			case '?':
+			default:
+				help();
+				return 0;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if(argc != 1)
+	{
+		help();
 		return 0;
+	}
 
-	memset(&opts, 0xFF, sizeof(opts));
-	opts.comments_element_names = 0;
-	opts.translate_coded_values = 0;
-
-	edi = load_whole_file(argv[1]);
+	edi = load_whole_file(argv[0]);
 	if(! edi)
 		return 1;
 
