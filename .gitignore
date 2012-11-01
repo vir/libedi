@@ -1,6 +1,11 @@
 *.obj
 *.o
 *.lo
+*.la
+config.*
+debian/*.log
+debian/*.substvars
+debian/*/
 libedistruct/unsl
 libedistruct/edcd
 libedistruct/eded
@@ -13,4 +18,9 @@ libedistruct/part2
 libedistruct/part3
 libedistruct/part4
 libedistruct/uncl
+.libs
+.deps
+Makefile
+Makefile.in
+
 
