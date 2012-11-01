@@ -13,6 +13,7 @@ Description: EDI (???) documents parsing and building library
 
 Package: edi2xml
 Architecture: any
+Conflicts: libxml-edifact-perl
 Depends: libedi, ${shlibs:Depends}, ${misc:Depends}
 Description: EDI to XML converter
 
