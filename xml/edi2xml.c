@@ -10,6 +10,7 @@
 #include "libedi.h"
 #include "libedistruct.h"
 #include <iconv.h>
+#include <stdarg.h>
 
 static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
 	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""
@@ -21,9 +22,25 @@ struct {
 	int comments_segment_names:1;
 	int comments_coded_values:1;
 	int comments_element_names:1;
+	int comments_errors:1;
 	int translate_coded_values:1;
 	int translate_coded_to_elements:1;
 } opts;
+
+void error(const char * format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	fprintf(stderr, "\n");
+	if(opts.comments_errors)
+	{
+		printf("<!-- ERROR: ");
+		vprintf(format, ap);
+		printf(" -->\n");
+	}
+	va_end(ap);
+}
 
 char * load_whole_file(const char * fname)
 {
@@ -168,7 +185,7 @@ void element_to_xml(const char * name, const char * val)
 	e = find_edistruct_element(name);
 	if(! e)
 	{
-		printf("<!-- ERROR: unknown element %s -->\n", name);
+		error("unknown element %s", name);
 		return;
 	}
 	printf("<E:%s>", e->title2);
@@ -218,7 +235,7 @@ void segment_to_xml(edi_segment_t * seg)
 	sstruct = find_edistruct_segment(seg->tag);
 	if(! sstruct) /* fallback */
 	{
-		printf("<!-- ERROR: Unknown segment %s -->", seg->tag);
+		error("unknown segment %s", seg->tag);
 		return;
 	}
 
@@ -253,7 +270,7 @@ void segment_to_xml(edi_segment_t * seg)
 				continue;
 			else
 			{
-				printf("<!-- ERROR: mandatory element %s is missing -->", s);
+				error("mandatory element %s is missing", s);
 				break;
 			}
 		}
@@ -288,7 +305,7 @@ void segment_to_xml(edi_segment_t * seg)
 				}
 				else
 				{
-					printf("<!-- ERROR: mandatory element %s is missing -->", s);
+					error("mandatory element %s is missing", s);
 					break;
 				}
 			}
@@ -319,6 +336,9 @@ void segment_to_xml(edi_segment_t * seg)
 		}
 		++data_element_index;
 	}
+
+	if(data_element_index < seg->nelements)
+		error("extra data at segment %s tail", seg->tag);
 
 	printf("</S:%s>\n", sstruct->title2);
 }
@@ -373,6 +393,7 @@ int main(int argc, char * argv[])
 
 	memset(&opts, 0, sizeof(opts));
 	conv = (iconv_t)-1;
+	opts.comments_errors = 1;
 
 	while((ch = getopt(argc, argv, "?hc:dex:")) != -1) {
 		switch (ch) {
