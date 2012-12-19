@@ -350,12 +350,15 @@ sub make_xml_defs_segments
 		my $title1 = $s->{$seg}{title};
 		my $title2 = make_title2($title1);
 		my $function = $s->{$seg}{function};
-#		my $children = "${namepart}_${seg}_children";
-		my $e = mk_element($namepart,
+		my @children;
+		foreach my $c(@{ $s->{$seg}{elements} }) {
+			push @children, mk_element('child', $c);
+		}
+		my $e = mk_element($namepart, { code => $seg },
 			mk_element('title1', $title1),
 			mk_element('title2', $title2),
 			mk_element('function', $function),
-#			mk_element('children', $children),
+			mk_element('children', @children),
 		);
 		push @a, $e."\n";
 	}
@@ -372,7 +375,7 @@ sub make_xml_defs_elements
 		my $function = $s->{$el}{function};
 		my $format = $s->{$el}{format};
 		my $is_coded = $codes->{$el} ? 1 : 0;
-		my $e = mk_element($namepart,
+		my $e = mk_element($namepart, { code => $el },
 			mk_element('title1', $title1),
 			mk_element('title2', $title2),
 			mk_element('function', $function),

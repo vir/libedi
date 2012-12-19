@@ -338,9 +338,30 @@ void segment_to_xml(edi_segment_t * seg)
 	}
 
 	if(data_element_index < seg->nelements)
-		error("extra data at segment %s tail", seg->tag);
+		error("extra data (%d element%s) at segment %s tail", seg->nelements - data_element_index, seg->nelements - data_element_index > 1 ? "s" : "", seg->tag);
 
 	printf("</S:%s>\n", sstruct->title2);
+}
+
+void parse_message_header(edi_segment_t * seg) 
+{
+	struct {
+		const char * msg_type;
+		const char * msg_ver;
+		const char * msg_release;
+		const char * msg_agency;
+	} h;
+	edi_element_t* msgid;
+	if(seg->nelements != 3 || seg->elements[2].type != 'C' || seg->elements[2].composite.nvalues < 4)
+	{
+		error("Can not parse message header format, %d elements", seg->nelements);
+		return;
+	}
+	msgid = &seg->elements[2];
+	h.msg_type    = msgid->composite.values[0];
+	h.msg_ver     = msgid->composite.values[1];
+	h.msg_release = msgid->composite.values[2];
+	h.msg_agency  = msgid->composite.values[3];
 }
 
 int proc_edi(const char * edi_text)
@@ -361,7 +382,11 @@ int proc_edi(const char * edi_text)
 		const char * tag = seg->tag;
 		if(0 == strcmp(tag, "UNB")) { printf("<X:interchange %s>", namespaces); }
 		if(0 == strcmp(tag, "UNG")) { puts("<X:group>"); }
-		if(0 == strcmp(tag, "UNH")) { puts("<X:message>"); }
+		if(0 == strcmp(tag, "UNH"))
+		{
+			parse_message_header(seg);
+			puts("<X:message>");
+		}
 		segment_to_xml(seg);
 		if(0 == strcmp(tag, "UNZ")) { puts("</X:interchange>"); }
 		if(0 == strcmp(tag, "UNE")) { puts("</X:group>"); }
@@ -394,6 +419,8 @@ int main(int argc, char * argv[])
 	memset(&opts, 0, sizeof(opts));
 	conv = (iconv_t)-1;
 	opts.comments_errors = 1;
+
+	load_struct("C:/Projects/libedi/libedistruct");
 
 	while((ch = getopt(argc, argv, "?hc:dex:")) != -1) {
 		switch (ch) {
