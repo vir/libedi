@@ -119,6 +119,7 @@ char * strndup(const char * s, int len)
 
 struct segments_parse_helper
 {
+	const char * basepath;
 	edistruct_segment_t * segs;
 	unsigned int index;
 	unsigned int alloc;
@@ -129,7 +130,7 @@ struct segments_parse_helper
 static void XMLCALL segments_tstart(void *userData, const char * xpath, const char **attrs)
 {
 	struct segments_parse_helper * self = (struct segments_parse_helper *)userData;
-	if(0 == strcmp(xpath, "/segments/segment"))
+	if(0 == strcmp(xpath, self->basepath))
 	{
 		if(self->index == self->alloc)
 		{
@@ -142,11 +143,12 @@ static void XMLCALL segments_tstart(void *userData, const char * xpath, const ch
 static void XMLCALL segments_tend(void *userData, const char * xpath)
 {
 	struct segments_parse_helper * self = (struct segments_parse_helper *)userData;
-	if(0 == strcmp(xpath, "/segments/segment"))
+	const char * p = xpath + strlen(self->basepath);
+	if(0 == strcmp(xpath, self->basepath))
 	{
 		++self->index;
 	}
-	else if(0 == strcmp(xpath, "/segments/segment/children"))
+	else if(0 == strncmp(xpath, self->basepath, strlen(self->basepath)) && 0 == strcmp(p, "/children"))
 	{
 		if(self->chld_index == self->chld_alloc)
 		{
@@ -163,16 +165,20 @@ static void XMLCALL segments_tend(void *userData, const char * xpath)
 static void XMLCALL segments_cdata(void *userData, const char * xpath, const XML_Char *s, int len)
 {
 	struct segments_parse_helper * self = (struct segments_parse_helper *)userData;
-	edistruct_segment_t * cur = &self->segs[self->index];
-	if(0 == strcmp(xpath, "/segments/segment/@code"))
+	edistruct_segment_t * cur;
+	const char * p = xpath + strlen(self->basepath);
+	if(0 != strncmp(xpath, self->basepath, strlen(self->basepath)))
+		return;
+	cur = &(self->segs[self->index]);
+	if(0 == strcmp(p, "/@code"))
 		cur->name = strndup(s, len);
-	else if(0 == strcmp(xpath, "/segments/segment/title1"))
+	else if(0 == strcmp(p, "/title1"))
 		cur->title = strndup(s, len);
-	else if(0 == strcmp(xpath, "/segments/segment/title2"))
+	else if(0 == strcmp(p, "/title2"))
 		cur->title2 = strndup(s, len);
-	else if(0 == strcmp(xpath, "/segments/segment/function"))
+	else if(0 == strcmp(p, "/function"))
 		cur->function = strndup(s, len);
-	else if(0 == strcmp(xpath, "/segments/segment/children/child"))
+	else if(0 == strcmp(p, "/children/child"))
 	{
 		if(self->chld_index == self->chld_alloc)
 		{
@@ -184,11 +190,12 @@ static void XMLCALL segments_cdata(void *userData, const char * xpath, const XML
 	}
 }
 
-static int load_segments(const char * fn, edistruct_segment_t ** out_segs, unsigned int * out_count)
+static int load_segments(const char * fn, edistruct_segment_t ** out_segs, unsigned int * out_count, const char * basepath)
 {
 	int r;
 	struct segments_parse_helper self;
 	memset(&self, 0, sizeof(self));
+	self.basepath = basepath;
 	r = parse_xml_file(fn, segments_tstart, segments_tend, segments_cdata, &self);
 	if(r == 0)
 	{
@@ -258,12 +265,91 @@ static int load_elements(const char * fn, edistruct_element_t ** out_elems, unsi
 }
 
 
+/* ============================== codes ============================== */
+
+struct codes_parse_helper
+{
+	struct edistruct_coded_elements * cv;
+	unsigned int cv_index, cv_alloc;
+	edistruct_coded_t * cc;
+	unsigned int cc_index, cc_alloc;
+};
+static void XMLCALL codes_tstart(void *userData, const char * xpath, const char **attrs)
+{
+	struct codes_parse_helper * self = (struct codes_parse_helper *)userData;
+	if(0 == strcmp(xpath, "/coded_values/coded_element"))
+	{
+		if(self->cv_index == self->cv_alloc)
+		{
+			self->cv_alloc += 10;
+			self->cv = realloc(self->cv, self->cv_alloc * sizeof(*self->cv));
+		}
+	}
+	else if(0 == strcmp(xpath, "/coded_values/coded_element/value"))
+	{
+		if(self->cc_index == self->cc_alloc)
+		{
+			self->cc_alloc += 10;
+			self->cc = realloc(self->cc, self->cc_alloc * sizeof(*self->cc));
+			self->cv[self->cv_index].vals = self->cc;
+		}
+	}
+}
+static void XMLCALL codes_tend(void *userData, const char * xpath)
+{
+	struct codes_parse_helper * self = (struct codes_parse_helper *)userData;
+	if(0 == strcmp(xpath, "/coded_values/coded_element"))
+	{
+		self->cv[self->cv_index].vals = self->cc;
+		self->cv[self->cv_index].nvals = self->cc_index;
+		++self->cv_index;
+		self->cc = NULL;
+		self->cc_index = self->cc_alloc = 0;
+	}
+	else if(0 == strcmp(xpath, "/coded_values/coded_element/value"))
+		++self->cc_index;
+}
+static void XMLCALL codes_cdata(void *userData, const char * xpath, const XML_Char *s, int len)
+{
+	const char * p;
+	struct codes_parse_helper * self = (struct codes_parse_helper *)userData;
+	edistruct_coded_t * cur = &self->cc[self->cc_index];
+
+	if(0 == strcmp(xpath, "/coded_values/coded_element/@code"))
+		self->cv[self->cv_index].el = strndup(s, len);
+	else if(0 != strncmp(xpath, "/coded_values/coded_element/value", 33))
+		return;
+
+	p = xpath + 33;
+	if(0 == strcmp(p, "/@code"))
+		cur->name = strndup(s, len);
+	else if(0 == strcmp(p, "/title1"))
+		cur->title = strndup(s, len);
+	else if(0 == strcmp(p, "/title2"))
+		cur->title2 = strndup(s, len);
+	else if(0 == strcmp(p, "/function"))
+		cur->function = strndup(s, len);
+}
+
+static int load_codes(const char * fn, struct edistruct_coded_elements ** out_elems, unsigned int * out_count)
+{
+	int r;
+	struct codes_parse_helper self;
+	memset(&self, 0, sizeof(self));
+	r = parse_xml_file(fn, codes_tstart, codes_tend, codes_cdata, &self);
+	if(r == 0)
+	{
+		*out_count = self.cv_index;
+		*out_elems = self.cv;
+	}
+	return r;
+}
 
 
 
 
 
-
+/* ================================================================= */
 
 static char * concat_path(const char * dir, const char * fn)
 {
@@ -284,7 +370,13 @@ int load_struct(const char * dir)
 	int r;
 	char * fn;
 	fn = concat_path(dir, "segs.xml");
-	r = load_segments(fn, &global_struc.segs, &global_struc.nsegs);
+	r = load_segments(fn, &global_struc.segs, &global_struc.nsegs, "/segments/segment");
+	if(r != 0)
+		fprintf(stderr, "Error loading %s\n", fn);
+	free(fn);
+
+	fn = concat_path(dir, "comps.xml");
+	r = load_segments(fn, (edistruct_segment_t**)&global_struc.comps, &global_struc.ncomps, "/composites/composite");
 	if(r != 0)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
@@ -295,8 +387,16 @@ int load_struct(const char * dir)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
 
+	fn = concat_path(dir, "coded.xml");
+	r = load_codes(fn, &global_struc.codes, &global_struc.ncodes);
+	if(r != 0)
+		fprintf(stderr, "Error loading %s\n", fn);
+	free(fn);
+
 	return r;
 }
+
+/* ================================================================= */
 
 const struct edistruct_segment * find_edistruct_segment(const char * name)
 {
@@ -321,6 +421,47 @@ const struct edistruct_element * find_edistruct_element(const char * name)
 		size_t cur = (begin + end) / 2;
 		int cmp = strcmp(name, elements[cur].name);
 		if(cmp == 0) return & elements[cur];
+		if(cmp < 0) end = cur; else begin = cur + 1;
+		if(end - begin < 1) return NULL;
+	}
+}
+
+const struct edistruct_composite * find_edistruct_composite(const char * name)
+{
+	size_t begin = 0;
+	size_t end = global_struc.ncomps;
+	edistruct_composite_t * composites = global_struc.comps;
+	for(;;) {
+		size_t cur = (begin + end) / 2;
+		int cmp = strcmp(name, composites[cur].name);
+		if(cmp == 0) return & composites[cur];
+		if(cmp < 0) end = cur; else begin = cur + 1;
+		if(end - begin < 1) return NULL;
+	}
+}
+
+static const struct edistruct_coded * find_actual_value(const struct edistruct_coded_elements * tab, const char * name)
+{
+	size_t begin = 0;
+	size_t end = tab->nvals;
+	for(;;) {
+		size_t cur = (begin + end) / 2;
+		int cmp = strcmp(name, tab->vals[cur].name);
+		if(cmp == 0) return &tab->vals[cur];
+		if(cmp < 0) end = cur; else begin = cur + 1;
+		if(end - begin < 1) return NULL;
+	}
+}
+
+const struct edistruct_coded * find_coded_value(const char * elem, const char * name)
+{
+	size_t begin = 0;
+	size_t end = global_struc.ncodes;
+	struct edistruct_coded_elements * coded_values_table = global_struc.codes;
+	for(;;) {
+		size_t cur = (begin + end) / 2;
+		int cmp = strcmp(elem, coded_values_table[cur].el);
+		if(cmp == 0) return find_actual_value(&coded_values_table[cur], name);
 		if(cmp < 0) end = cur; else begin = cur + 1;
 		if(end - begin < 1) return NULL;
 	}

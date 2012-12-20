@@ -349,6 +349,7 @@ sub make_xml_defs_segments
 	foreach my $seg(sort keys %$s) {
 		my $title1 = $s->{$seg}{title};
 		my $title2 = make_title2($title1);
+		$title1 = escape_xml($title1);
 		my $function = $s->{$seg}{function};
 		my @children;
 		foreach my $c(@{ $s->{$seg}{elements} }) {
@@ -362,7 +363,7 @@ sub make_xml_defs_segments
 		);
 		push @a, $e."\n";
 	}
-	return mk_element($namepart.'s', @a);
+	return mk_element($namepart.'s', { count => scalar(@a) }, @a);
 }
 
 sub make_xml_defs_elements
@@ -372,6 +373,7 @@ sub make_xml_defs_elements
 	foreach my $el(sort keys %$s) {
 		my $title1 = $s->{$el}{title};
 		my $title2 = make_title2($title1);
+		$title1 = escape_xml($title1);
 		my $function = $s->{$el}{function};
 		my $format = $s->{$el}{format};
 		my $is_coded = $codes->{$el} ? 1 : 0;
@@ -384,7 +386,7 @@ sub make_xml_defs_elements
 		);
 		push @a, $e."\n";
 	}
-	return mk_element($namepart.'s', @a);
+	return mk_element($namepart.'s', { count => scalar(@a) }, @a);
 }
 
 sub make_xml_defs_coded
@@ -397,6 +399,7 @@ sub make_xml_defs_coded
 		foreach my $val(sort keys %$x) {
 			my($title1, $function) = @{ $x->{$val} };
 			my $title2 = make_title2($title1);
+			$title1 = escape_xml($title1);
 			$function = escape_xml($function);
 			$title1 = escape_xml($title1);
 			my $e = mk_element('value', { code => $val },
@@ -406,7 +409,7 @@ sub make_xml_defs_coded
 			);
 			push @b, $e;
 		}
-		push @a, mk_element('coded_element', { name => $el }, @b)."\n";
+		push @a, mk_element('coded_element', { code => $el, count => scalar(@b) }, @b)."\n";
 	}
-	return mk_element('coded_values', @a);
+	return mk_element('coded_values', { count => scalar(@a) }, @a);
 }

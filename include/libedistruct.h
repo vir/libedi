@@ -45,12 +45,18 @@ struct edistruct_coded
 	const char * function;
 };
 
+struct edistruct_coded_elements {
+	const char * el;
+	const edistruct_coded_t * vals;
+	unsigned int nvals;
+};
+
 struct edistruct_all {
 	unsigned int nsegs, nelems, ncomps, ncodes;
 	edistruct_segment_t * segs;
 	edistruct_element_t * elems;
 	edistruct_composite_t * comps;
-	edistruct_coded_t * codes;
+	struct edistruct_coded_elements * codes;
 };
 
 const struct edistruct_segment   * find_edistruct_segment(const char * name);
