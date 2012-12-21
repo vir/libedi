@@ -301,6 +301,7 @@ void segment_to_xml(edi_segment_t * seg)
 				if(is_optional)
 				{
 					element_missing_xml(s);
+					++data_element_index;
 					continue;
 				}
 				else
