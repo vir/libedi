@@ -123,22 +123,41 @@ $s->{UCD} = {
 	elements => [ 'MS011', 'C0085' ],
 };
 
-open F, ">", "segs.c" or die;
-print F make_c_defs_segments($s, 'segment');
-close F or die;
+if(0) {
+	open F, ">", "segs.c" or die;
+	print F make_c_defs_segments($s, 'segment');
+	close F or die;
 
-open F, ">", "comps.c" or die;
-print F make_c_defs_segments($c, 'composite');
-close F or die;
+	open F, ">", "comps.c" or die;
+	print F make_c_defs_segments($c, 'composite');
+	close F or die;
 
-open F, ">", "elems.c" or die;
-print F make_c_defs_elements($e, 'element', $z);
-close F or die;
+	open F, ">", "elems.c" or die;
+	print F make_c_defs_elements($e, 'element', $z);
+	close F or die;
 
-open F, ">", "coded.c" or die;
-print F make_c_defs_coded($z);
-close F or die;
+	open F, ">", "coded.c" or die;
+	print F make_c_defs_coded($z);
+	close F or die;
+} else {
+	open F, ">", "segs.xml" or die;
+	print F make_xml_defs_segments($s, 'segment');
+	close F or die;
 
+	open F, ">", "comps.xml" or die;
+	print F make_xml_defs_segments($c, 'composite');
+	close F or die;
+
+	open F, ">", "elems.xml" or die;
+	print F make_xml_defs_elements($e, 'element', $z);
+	close F or die;
+
+	open F, ">", "coded.xml" or die;
+	print F make_xml_defs_coded($z);
+	close F or die;
+}
+
+#################### C code generation ####################
 
 sub make_c_defs_segments
 {
@@ -283,4 +302,114 @@ const struct edistruct_coded * find_coded_value(const char * elem, const char * 
 	}
 }
 ***
+}
+
+
+
+#################### XML generation ####################
+
+
+sub escape_xml
+{
+	local($_) = @_;
+	s#\&#\&amp;#sg;
+	s#\<#\&lt;#sg;
+	s#\>#\&gt;#sg;
+	s#\"#\&quot;#sg;
+	return $_;
+}
+sub escape_html
+{
+	return escape_xml(@_);
+}
+
+sub mk_element
+{
+	my $n = shift;
+	my $attrs = {};
+	if(ref($_[0])) {
+		$attrs = shift;
+	}
+	my $r = "<$n";
+	$r .= " $_=\"$attrs->{$_}\"" foreach(keys %$attrs);
+	if(@_) {
+		$r .= ">";
+		$r .= $_ foreach @_;
+		$r .= "</$n>";
+	} else {
+		$r .= " />";
+	}
+	return $r;
+}
+
+sub make_xml_defs_segments
+{
+	my($s, $namepart) = @_;
+	my @a;
+	foreach my $seg(sort keys %$s) {
+		my $title1 = $s->{$seg}{title};
+		my $title2 = make_title2($title1);
+		$title1 = escape_xml($title1);
+		my $function = $s->{$seg}{function};
+		my @children;
+		foreach my $c(@{ $s->{$seg}{elements} }) {
+			push @children, mk_element('child', $c);
+		}
+		my $e = mk_element($namepart, { code => $seg },
+			mk_element('title1', $title1),
+			mk_element('title2', $title2),
+			mk_element('function', $function),
+			mk_element('children', @children),
+		);
+		push @a, $e."\n";
+	}
+	return mk_element($namepart.'s', { count => scalar(@a) }, @a);
+}
+
+sub make_xml_defs_elements
+{
+	my($s, $namepart, $codes) = @_;
+	my @a;
+	foreach my $el(sort keys %$s) {
+		my $title1 = $s->{$el}{title};
+		my $title2 = make_title2($title1);
+		$title1 = escape_xml($title1);
+		my $function = $s->{$el}{function};
+		my $format = $s->{$el}{format};
+		my $is_coded = $codes->{$el} ? 1 : 0;
+		my $e = mk_element($namepart, { code => $el },
+			mk_element('title1', $title1),
+			mk_element('title2', $title2),
+			mk_element('function', $function),
+			mk_element('format', $format),
+			mk_element('is_coded', $is_coded),
+		);
+		push @a, $e."\n";
+	}
+	return mk_element($namepart.'s', { count => scalar(@a) }, @a);
+}
+
+sub make_xml_defs_coded
+{
+	my($z) = @_;
+	my @a;
+	foreach my $el(sort keys %$z) {
+		my $x = $z->{$el}{map};
+		my @b;
+		foreach my $val(sort keys %$x) {
+			my($title1, $function) = @{ $x->{$val} };
+			my $title2 = make_title2($title1);
+			$title1 = escape_xml($title1);
+			$function = escape_xml($function);
+			$title1 = escape_xml($title1);
+			my $e = mk_element('value', { code => $val },
+				mk_element('title1', $title1),
+				mk_element('title2', $title2),
+				mk_element('function', $function),
+			);
+			push @b, $e;
+		}
+		push @a, mk_element('coded_element', { code => $el, count => scalar(@b) }, @b)."\n";
+	}
+	return mk_element('coded_values', { count => scalar(@a) }, @a);
 }
