@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iconv.h>
 #include <malloc.h>
+#include <string.h>
 
 iconv_t conv;
 char ** outbufptr = NULL;
@@ -47,7 +48,7 @@ void output(const char * format, ...)
 				outbufsize += 1024;
 				*outbufptr = (char*)realloc(*outbufptr, outbufsize);
 			}
-			len = vsprintf(*outbufptr + outbufpos, format, ap);
+			len = vsnprintf(*outbufptr + outbufpos, outbufsize - outbufpos - 1, format, ap);
 		} while(len < 0);
 		outbufpos += len;
 	}

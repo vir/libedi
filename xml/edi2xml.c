@@ -56,11 +56,16 @@ int main(int argc, char * argv[])
 	char ch;
 	int r;
 	char * edi;
+	char * outbuf = NULL;
 
 	memset(&edi2xml_opts, 0, sizeof(edi2xml_opts));
 	edi2xml_opts.comments_errors = 1;
 
+#if 0
 	output_init(NULL);
+#else
+	output_init(&outbuf);
+#endif
 
 	load_struct("C:/Projects/libedi/libedistruct");
 
@@ -108,6 +113,11 @@ int main(int argc, char * argv[])
 		return 1;
 
 	r = edi2xml_conv(edi);
+
+#if 1
+	printf(outbuf);
+	free(outbuf);
+#endif
 
 	free(edi);
 	output_shutdown();

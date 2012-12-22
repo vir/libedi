@@ -3,6 +3,8 @@
 #ifdef _MSC_VER
 # include <STDDEF.H>
 #endif
+#include <malloc.h>
+#include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
 
@@ -32,14 +34,20 @@ static char * coded_to_xml(const char * name, const char * val)
 	{
 		len = strlen(z->title2) + 8;
 		text = malloc(len);
-		sprintf(text, "<Z:%s />", z->title2);
+		strcpy(text, "<Z:");
+		strcat(text, z->title2);
+		strcat(text, " />");
 	}
 	else
 	{
 		char * tit = escape_xml(z->title);
 		len = strlen(tit) + strlen(val) + 28;
 		text = malloc(len);
-		sprintf(text, "<X:coded code=\"%s\">%s</X:coded>", val, tit);
+		strcpy(text, "<X:coded code=\"");
+		strcat(text, val);
+		strcat(text, "\">");
+		strcat(text, tit);
+		strcat(text, "</X:coded>");
 		free(tit);
 	}
 	return text;
