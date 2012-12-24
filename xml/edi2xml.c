@@ -9,8 +9,8 @@
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
-#include "edi2xml.h"
-#include "output.h"
+#include "libedixml.h"
+#include "../libedixml/output.h"
 
 char * load_whole_file(const char * fname)
 {

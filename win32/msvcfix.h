@@ -15,6 +15,10 @@ typedef _w64 int        ssize_t;
 
 #define inline __inline
 
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_NONSTDC_NO_WARNINGS
+#ifndef _CRT_SECURE_NO_WARNINGS
+# define _CRT_SECURE_NO_WARNINGS
+#endif
+#ifndef _CRT_NONSTDC_NO_WARNINGS
+# define _CRT_NONSTDC_NO_WARNINGS
+#endif
 

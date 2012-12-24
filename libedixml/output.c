@@ -1,4 +1,4 @@
-#include "edi2xml.h"
+//#include "edi2xml.h"
 #include "output.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -54,25 +54,6 @@ void output(const char * format, ...)
 	}
 	else
 		vfprintf(stdout, format, ap);
-	va_end(ap);
-}
-
-void error(const char * format, ...)
-{
-	int len;
-	va_list ap;
-	va_start(ap, format);
-	len = vfprintf(stderr, format, ap);
-	fprintf(stderr, "\n");
-	if(edi2xml_opts.comments_errors)
-	{
-		char * buf = (char *)malloc(len + 1);
-		output("<!-- ERROR: ");
-		vsprintf(buf, format, ap);
-		output("%s", buf);
-		output(" -->\n");
-		free(buf);
-	}
 	va_end(ap);
 }
 

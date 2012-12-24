@@ -1,4 +1,4 @@
-#include "edi2xml.h"
+#include "libedixml.h"
 #include "output.h"
 #ifdef _MSC_VER
 # include <STDDEF.H>
@@ -7,12 +7,33 @@
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 static const char * namespaces = "xmlns:X=\"http://www.ctm.ru/edi/xchg\""
 	" xmlns:S=\"http://www.ctm.ru/edi/segs\" xmlns:C=\"http://www.ctm.ru/edi/comps\""
 	" xmlns:E=\"http://www.ctm.ru/edi/els\" xmlns:Z=\"http://www.ctm.ru/edi/codes\"";
 
 struct edi2xml_config edi2xml_opts;
+
+void error(const char * format, ...)
+{
+	int len;
+	va_list ap;
+	va_start(ap, format);
+	len = vfprintf(stderr, format, ap);
+	fprintf(stderr, "\n");
+	if(edi2xml_opts.comments_errors)
+	{
+		char * buf = (char *)malloc(len + 1);
+		output("<!-- ERROR: ");
+		vsprintf(buf, format, ap);
+		output("%s", buf);
+		output(" -->\n");
+		free(buf);
+	}
+	va_end(ap);
+}
 
 static char * coded_to_xml(const char * name, const char * val)
 {
