@@ -295,4 +295,19 @@ int edi2xml_conv(const char * edi_text)
 	return 0;
 }
 
+char * edi2xml_conv2(const char * edi_text, const char * enc)
+{
+	char * r = NULL;
+	output_init(&r);
+	if(enc)
+		output_set_enc(enc);
+	if(0 == edi2xml_conv(edi_text))
+	{
+		output_shutdown();
+		return r;
+	}
+	if(r)
+		free(r);
+	return NULL;
+}
 

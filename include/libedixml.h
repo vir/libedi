@@ -12,7 +12,15 @@ struct edi2xml_config {
 
 extern struct edi2xml_config edi2xml_opts;
 
-int edi2xml_conv(const char * edi_text);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+int edi2xml_conv(const char * edi_text);
+char * edi2xml_conv2(const char * edi_text, const char * enc);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* LIBEDIXML_H_INCLUDED */
