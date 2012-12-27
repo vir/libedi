@@ -1,3 +1,5 @@
+#ifndef LIBEDISTRUCT_H_INCLUDED
+#define LIBEDISTRUCT_H_INCLUDED
 
 #if defined(__cplusplus)
 extern "C" {
@@ -63,8 +65,11 @@ const struct edistruct_segment   * find_edistruct_segment(const char * name);
 const struct edistruct_composite * find_edistruct_composite(const char * name);
 const struct edistruct_element   * find_edistruct_element(const char * name);
 const struct edistruct_coded     * find_coded_value(const char * elem, const char * name);
-int load_struct(const char * dir);
+int edistruct_load_xml_files(const char * dir);
+void edistruct_set_struct(edistruct_all_t* n);
 
 #if defined(__cplusplus)
 } /* extern "C" */
 #endif
+
+#endif /* LIBEDISTRUCT_H_INCLUDED */

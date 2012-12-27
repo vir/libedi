@@ -363,106 +363,40 @@ static char * concat_path(const char * dir, const char * fn)
 	return buf;
 }
 
-static edistruct_all_t global_struc;
+static edistruct_all_t loaded_structs;
 
-int load_struct(const char * dir)
+int edistruct_load_xml_files(const char * dir)
 {
 	int r;
 	char * fn;
 	fn = concat_path(dir, "segs.xml");
-	r = load_segments(fn, &global_struc.segs, &global_struc.nsegs, "/segments/segment");
+	r = load_segments(fn, &loaded_structs.segs, &loaded_structs.nsegs, "/segments/segment");
 	if(r != 0)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
 
 	fn = concat_path(dir, "comps.xml");
-	r = load_segments(fn, (edistruct_segment_t**)&global_struc.comps, &global_struc.ncomps, "/composites/composite");
+	r = load_segments(fn, (edistruct_segment_t**)&loaded_structs.comps, &loaded_structs.ncomps, "/composites/composite");
 	if(r != 0)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
 
 	fn = concat_path(dir, "elems.xml");
-	r = load_elements(fn, &global_struc.elems, &global_struc.nelems);
+	r = load_elements(fn, &loaded_structs.elems, &loaded_structs.nelems);
 	if(r != 0)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
 
 	fn = concat_path(dir, "coded.xml");
-	r = load_codes(fn, &global_struc.codes, &global_struc.ncodes);
+	r = load_codes(fn, &loaded_structs.codes, &loaded_structs.ncodes);
 	if(r != 0)
 		fprintf(stderr, "Error loading %s\n", fn);
 	free(fn);
+
+	edistruct_set_struct(&loaded_structs);
 
 	return r;
 }
 
 /* ================================================================= */
 
-const struct edistruct_segment * find_edistruct_segment(const char * name)
-{
-	size_t begin = 0;
-	size_t end = global_struc.nsegs;
-	edistruct_segment_t * segments = global_struc.segs;
-	for(;;) {
-		size_t cur = (begin + end) / 2;
-		int cmp = strcmp(name, segments[cur].name);
-		if(cmp == 0) return & segments[cur];
-		if(cmp < 0) end = cur; else begin = cur + 1;
-		if(end - begin < 1) return NULL;
-	}
-}
-
-const struct edistruct_element * find_edistruct_element(const char * name)
-{
-	size_t begin = 0;
-	size_t end = global_struc.nelems;
-	edistruct_element_t * elements = global_struc.elems;
-	for(;;) {
-		size_t cur = (begin + end) / 2;
-		int cmp = strcmp(name, elements[cur].name);
-		if(cmp == 0) return & elements[cur];
-		if(cmp < 0) end = cur; else begin = cur + 1;
-		if(end - begin < 1) return NULL;
-	}
-}
-
-const struct edistruct_composite * find_edistruct_composite(const char * name)
-{
-	size_t begin = 0;
-	size_t end = global_struc.ncomps;
-	edistruct_composite_t * composites = global_struc.comps;
-	for(;;) {
-		size_t cur = (begin + end) / 2;
-		int cmp = strcmp(name, composites[cur].name);
-		if(cmp == 0) return & composites[cur];
-		if(cmp < 0) end = cur; else begin = cur + 1;
-		if(end - begin < 1) return NULL;
-	}
-}
-
-static const struct edistruct_coded * find_actual_value(const struct edistruct_coded_elements * tab, const char * name)
-{
-	size_t begin = 0;
-	size_t end = tab->nvals;
-	for(;;) {
-		size_t cur = (begin + end) / 2;
-		int cmp = strcmp(name, tab->vals[cur].name);
-		if(cmp == 0) return &tab->vals[cur];
-		if(cmp < 0) end = cur; else begin = cur + 1;
-		if(end - begin < 1) return NULL;
-	}
-}
-
-const struct edistruct_coded * find_coded_value(const char * elem, const char * name)
-{
-	size_t begin = 0;
-	size_t end = global_struc.ncodes;
-	struct edistruct_coded_elements * coded_values_table = global_struc.codes;
-	for(;;) {
-		size_t cur = (begin + end) / 2;
-		int cmp = strcmp(elem, coded_values_table[cur].el);
-		if(cmp == 0) return find_actual_value(&coded_values_table[cur], name);
-		if(cmp < 0) end = cur; else begin = cur + 1;
-		if(end - begin < 1) return NULL;
-	}
-}

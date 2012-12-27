@@ -67,7 +67,7 @@ int main(int argc, char * argv[])
 	output_init(&outbuf);
 #endif
 
-	load_struct("C:/Projects/libedi/libedistruct");
+	edistruct_load_xml_files("C:/Projects/libedi/libedistruct");
 
 	while((ch = getopt(argc, argv, "?hc:dex:")) != -1) {
 		switch (ch) {
