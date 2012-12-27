@@ -1,9 +1,9 @@
 #include "libedistruct.h"
 #include <string.h>
 
-static edistruct_all_t* curstruc = NULL;
+static const edistruct_all_t* curstruc = NULL;
 
-void edistruct_set_struct(edistruct_all_t* n)
+void edistruct_set_struct(const edistruct_all_t* n)
 {
 	curstruc = n;
 }

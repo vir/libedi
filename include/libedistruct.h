@@ -66,7 +66,7 @@ const struct edistruct_composite * find_edistruct_composite(const char * name);
 const struct edistruct_element   * find_edistruct_element(const char * name);
 const struct edistruct_coded     * find_coded_value(const char * elem, const char * name);
 int edistruct_load_xml_files(const char * dir);
-void edistruct_set_struct(edistruct_all_t* n);
+void edistruct_set_struct(const edistruct_all_t* n);
 
 #if defined(__cplusplus)
 } /* extern "C" */
