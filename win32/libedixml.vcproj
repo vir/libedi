@@ -61,6 +61,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -126,6 +127,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -190,6 +192,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -255,6 +258,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
