@@ -19,7 +19,7 @@
 		<Configuration
 			Name="DebugMD|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			>
@@ -82,7 +82,7 @@
 		<Configuration
 			Name="ReleaseMD|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -146,7 +146,7 @@
 		<Configuration
 			Name="DebugMT|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			>
@@ -209,7 +209,7 @@
 		<Configuration
 			Name="ReleaseMT|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"

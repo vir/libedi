@@ -715,12 +715,12 @@ load_mlang()
     h = LoadLibrary(TEXT("mlang.dll"));
     if (!h)
 	return FALSE;
-    ConvertINetString = (CONVERTINETSTRING)GetProcAddress(h, TEXT("ConvertINetString"));
-    ConvertINetMultiByteToUnicode = (CONVERTINETMULTIBYTETOUNICODE)GetProcAddress(h, TEXT("ConvertINetMultiByteToUnicode"));
-    ConvertINetUnicodeToMultiByte = (CONVERTINETUNICODETOMULTIBYTE)GetProcAddress(h, TEXT("ConvertINetUnicodeToMultiByte"));
-    IsConvertINetStringAvailable = (ISCONVERTINETSTRINGAVAILABLE)GetProcAddress(h, TEXT("IsConvertINetStringAvailable"));
-    LcidToRfc1766A = (LCIDTORFC1766A)GetProcAddress(h, TEXT("LcidToRfc1766A"));
-    Rfc1766ToLcidA = (RFC1766TOLCIDA)GetProcAddress(h, TEXT("Rfc1766ToLcidA"));
+    ConvertINetString = (CONVERTINETSTRING)GetProcAddress(h, "ConvertINetString");
+    ConvertINetMultiByteToUnicode = (CONVERTINETMULTIBYTETOUNICODE)GetProcAddress(h, "ConvertINetMultiByteToUnicode");
+    ConvertINetUnicodeToMultiByte = (CONVERTINETUNICODETOMULTIBYTE)GetProcAddress(h, "ConvertINetUnicodeToMultiByte");
+    IsConvertINetStringAvailable = (ISCONVERTINETSTRINGAVAILABLE)GetProcAddress(h, "IsConvertINetStringAvailable");
+    LcidToRfc1766A = (LCIDTORFC1766A)GetProcAddress(h, "LcidToRfc1766A");
+    Rfc1766ToLcidA = (RFC1766TOLCIDA)GetProcAddress(h, "Rfc1766ToLcidA");
     return TRUE;
 }
 

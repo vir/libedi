@@ -19,7 +19,7 @@
 		<Configuration
 			Name="DebugMD|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			>
@@ -61,7 +61,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libedi_$(ConfigurationName).lib libedistruct_$(ConfigurationName).lib libexpat_$(ConfigurationName).lib"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -84,7 +83,7 @@
 		<Configuration
 			Name="ReleaseMD|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -127,7 +126,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libedi_$(ConfigurationName).lib libedistruct_$(ConfigurationName).lib libexpat_$(ConfigurationName).lib"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -192,7 +190,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libedi_$(ConfigurationName).lib libedistruct_$(ConfigurationName).lib libexpat_$(ConfigurationName).lib"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
@@ -215,7 +212,7 @@
 		<Configuration
 			Name="ReleaseMT|Win32"
 			OutputDirectory="$(SolutionDir)Output"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectName)_$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -258,7 +255,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libedi_$(ConfigurationName).lib libedistruct_$(ConfigurationName).lib libexpat_$(ConfigurationName).lib"
 				OutputFile="$(OutDir)\libedixml_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="$(OutDir)"
 			/>
