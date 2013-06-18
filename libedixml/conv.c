@@ -271,6 +271,11 @@ int edi2xml_conv(const char * edi_text)
 
 	p = edi_parser_create(NULL);
 	ichg = edi_parser_parse(p, edi_text);
+	if(! ichg)
+	{
+		edi_parser_destroy(p);
+		return -1;
+	}
 
 	for(i = 0; i < ichg->nsegments; ++i)
 	{
@@ -297,17 +302,18 @@ int edi2xml_conv(const char * edi_text)
 
 char * edi2xml_conv2(const char * edi_text, const char * enc)
 {
+	int ok;
 	char * r = NULL;
 	output_init(&r);
 	if(enc)
 		output_set_enc(enc);
-	if(0 == edi2xml_conv(edi_text))
-	{
-		output_shutdown();
-		return r;
+	ok = 0 == edi2xml_conv(edi_text);
+	output_shutdown();
+	if(!ok){
+		if(r)
+			free(r);
+		r = NULL;
 	}
-	if(r)
-		free(r);
-	return NULL;
+	return r;
 }
 

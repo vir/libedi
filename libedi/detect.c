@@ -179,7 +179,7 @@ edi__detect(edi_parser_t *parser, const char *message, edi_params_t *params, siz
 	}
 	/* No match */
 	edi__detect_unlock();
-	return 0;
+	return -1;
 }
 
 static inline void
