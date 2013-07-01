@@ -22,5 +22,8 @@ libedistruct/uncl
 .deps
 Makefile
 Makefile.in
-
-
+*_ReleaseM[TD]
+*_DebugM[TD]
+win32/*.user
+win32/*.suo
+win32/*.ncb
