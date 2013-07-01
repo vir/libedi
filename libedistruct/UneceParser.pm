@@ -143,7 +143,7 @@ sub load_codes_file
 	my $unused = '';
 	my $mapkey;
 	my $ind = 100;
-	open F, '<:bytes', $fn or die;
+	open F, '<:bytes', $fn or die "Can't read $fn: $!\n";
 	while(<F>) {
 		if(/^\s*$/) { # skip empty lines
 			undef $lasttextref;
