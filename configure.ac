@@ -25,6 +25,14 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+dnl http://gnu-autoconf.7623.n7.nabble.com/Why-is-this-perl-checking-code-not-working-for-me-td13061.html
+AC_DEFUN([AX_PROG_PERL_VERSION],
+	[AC_CACHE_CHECK([for Perl version $1 or later], [ax_cv_prog_perl_version],
+		[AS_IF(["$PERL" -e 'require $1;' >/dev/null 2>&1],
+		        [ax_cv_prog_perl_version=yes],
+		        [ax_cv_prog_perl_version=no])])
+	 AS_IF([test x"$ax_cv_prog_perl_version" = xyes], [$2], [$3])]) 
+
 AC_INIT(libedi, 1.0.2)
 AC_CONFIG_SRCDIR([libedi/parse.c])
 AM_INIT_AUTOMAKE([foreign])
