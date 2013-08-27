@@ -1,9 +1,15 @@
-//#include "edi2xml.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include "output.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <iconv.h>
-#include <malloc.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+#else
+# include <malloc.h>
+#endif
 #include <string.h>
 
 iconv_t conv;

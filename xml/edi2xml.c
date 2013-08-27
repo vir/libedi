@@ -1,3 +1,6 @@
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #ifdef _MSC_VER
 # include "../win32/msvcfix.h"
 # include "../win32/wingetopt.h"
@@ -5,7 +8,11 @@
 # include <unistd.h> /* for getopt */
 #endif
 #include <stdio.h>
-#include <malloc.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+#else
+# include <malloc.h>
+#endif
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
@@ -42,8 +49,8 @@ char * load_whole_file(const char * fname)
 
 void help()
 {
-	puts("\nUsage: edi2xml [edi2xml_opts. edi_file.txt > file.xml");
-	puts("edi2xml_opts.");
+	puts("\nUsage: edi2xml [opts] edi_file.txt > file.xml");
+	puts("opts:");
 	puts("\t-h : this help");
 	puts("\t-c [s][e][c] : turn on xml comments for segment names, element names and coded values respectively.");
 	puts("\t-d : translate coded values");
