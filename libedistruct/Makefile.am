@@ -3,7 +3,7 @@
 PERL=@PERL@
 
 AM_CFLAGS = -I${top_srcdir}/include -I${top_builddir}/include -I@includedir@ -DDATADIR=\"$(datadir)\"
-#AM_LDFLAGS = -L@libdir@ -lexpat
+AM_LDFLAGS = -L@libdir@
 
 lib_LTLIBRARIES = libedistruct.la
 
@@ -18,8 +18,6 @@ edcd/EDCD.99A: uncl/UNCL.99A
 eded/EDED.99A: uncl/UNCL.99A
 part4/D422.TXT: uncl/UNCL.99A
 
-libedistruct_la_CPPFLAGS = -I${top_srcdir}/include -I${top_builddir}/include
-#libedistruct_la_SOURCES = coded.c  comps.c  elems.c  segs.c
 libedistruct_la_SOURCES = struct_loader.c lookup.c
 libedistruct_la_LDFLAGS = -avoid-version
 
@@ -32,5 +30,5 @@ coded.xml: elems.xml
 noinst_PROGRAMS = test1
 
 test1_SOURCES = test1.c
-test1_LDADD = ../libedi/libedi.la libedistruct.la
+test1_LDADD = -lexpat ../libedi/libedi.la libedistruct.la
 
