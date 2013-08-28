@@ -2,7 +2,7 @@
 
 PERL=@PERL@
 
-AM_CFLAGS = -I${top_srcdir}/include -I${top_builddir}/include -I@includedir@ -DDATADIR=\"$(datadir)\"
+AM_CFLAGS = -I${top_srcdir}/include -I${top_builddir}/include -I@includedir@ -DDATADIR=\"$(datadir)/@PACKAGE@\"
 AM_LDFLAGS = -L@libdir@
 
 lib_LTLIBRARIES = libedistruct.la

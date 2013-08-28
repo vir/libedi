@@ -1,5 +1,4 @@
-
-AM_CPPFLAGS = -I${top_srcdir}/include -I${top_builddir}/include $(DEPS_CFLAGS)
+AM_CFLAGS = -I${top_srcdir}/include -I${top_builddir}/include $(DEPS_CFLAGS) -I@includedir@ -DDATADIR=\"$(datadir)/@PACKAGE@\"
 AM_LDFLAGS = -L@libdir@
 
 bin_PROGRAMS = edi2xml
