@@ -127,7 +127,7 @@ int main(int argc, char * argv[])
 	r = edi2xml_conv(edi);
 
 #if 1
-	printf(outbuf);
+	printf("%s\n", outbuf);
 	free(outbuf);
 #endif
 
