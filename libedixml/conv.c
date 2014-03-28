@@ -7,6 +7,7 @@
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"
+#include "excep.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -268,6 +269,7 @@ int edi2xml_conv(const char * edi_text)
 	edi_parser_t * p;
 	edi_interchange_t * ichg;
 	size_t i;
+	int rc = 0;
 
 	p = edi_parser_create(NULL);
 	ichg = edi_parser_parse(p, edi_text);
@@ -277,27 +279,35 @@ int edi2xml_conv(const char * edi_text)
 		return -1;
 	}
 
-	for(i = 0; i < ichg->nsegments; ++i)
+	if(0 == setjmp(edixml_exception)) /* our "try" block */
 	{
-		edi_segment_t * seg = &ichg->segments[i];
-		const char * tag = seg->tag;
-		if(0 == strcmp(tag, "UNB")) { output("<X:interchange %s>\n", namespaces); }
-		if(0 == strcmp(tag, "UNG")) { output("<X:group>\n"); }
-		if(0 == strcmp(tag, "UNH"))
+		for(i = 0; i < ichg->nsegments; ++i)
 		{
-			parse_message_header(seg);
-			output("<X:message>\n");
+			edi_segment_t * seg = &ichg->segments[i];
+			const char * tag = seg->tag;
+			if(0 == strcmp(tag, "UNB")) { output("<X:interchange %s>\n", namespaces); }
+			if(0 == strcmp(tag, "UNG")) { output("<X:group>\n"); }
+			if(0 == strcmp(tag, "UNH"))
+			{
+				parse_message_header(seg);
+				output("<X:message>\n");
+			}
+			segment_to_xml(seg);
+			if(0 == strcmp(tag, "UNZ")) { output("</X:interchange>\n"); }
+			if(0 == strcmp(tag, "UNE")) { output("</X:group>\n"); }
+			if(0 == strcmp(tag, "UNT")) { output("</X:message>\n"); }
 		}
-		segment_to_xml(seg);
-		if(0 == strcmp(tag, "UNZ")) { output("</X:interchange>\n"); }
-		if(0 == strcmp(tag, "UNE")) { output("</X:group>\n"); }
-		if(0 == strcmp(tag, "UNT")) { output("</X:message>\n"); }
+	}
+	else /* Our "catch" block */
+	{
+		rc = -1;
+		error("Exception: %s", edixml_excp_text);
 	}
 
 	edi_interchange_destroy(ichg);
 	edi_parser_destroy(p);
 
-	return 0;
+	return rc;
 }
 
 char * edi2xml_conv2(const char * edi_text, const char * enc)
@@ -317,3 +327,7 @@ char * edi2xml_conv2(const char * edi_text, const char * enc)
 	return r;
 }
 
+const char * edi2xml_error()
+{
+	return edixml_excp_text;
+}

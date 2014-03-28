@@ -292,6 +292,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\libedixml\excep.c"
+				>
+			</File>
+			<File
 				RelativePath="..\libedixml\output.c"
 				>
 			</File>
@@ -305,6 +309,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{00FDBFBC-FAA6-4c33-961A-DC0D7A71CBD2}"
 			>
+			<File
+				RelativePath="..\libedixml\excep.h"
+				>
+			</File>
 			<File
 				RelativePath=".\iconv.h"
 				>

@@ -18,6 +18,7 @@ extern "C" {
 
 int edi2xml_conv(const char * edi_text);
 char * edi2xml_conv2(const char * edi_text, const char * enc);
+const char * edi2xml_error();
 
 #ifdef __cplusplus
 };

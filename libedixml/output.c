@@ -5,6 +5,9 @@
 #include <iconv.h>
 #include <malloc.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
+#include "excep.h"
 
 iconv_t conv;
 char ** outbufptr = NULL;
@@ -73,17 +76,36 @@ char * do_conv(const char * src)
 	{
 		size_t dstpos;
 		r = iconv(conv, (char**)&src, &srcleft, &dst, &dstleft);
-		if(r != (size_t)-1 && !srcleft)
+		if(r == (size_t)-1)
+		{
+			switch(errno)
+			{
+			case E2BIG: /* There is not sufficient room at *outbuf */
+				dstpos = dst - dstbuf;
+				dstlen += 100;
+				dstbuf = realloc(dstbuf, dstlen);
+				dstleft += 100;
+				dst += dstpos;
+				break;
+			case EILSEQ: /* An invalid multibyte sequence has been encountered in the input */
+				free(dstbuf);
+				throw_exception("An invalid multibyte sequence has been encountered in the input");
+			case EINVAL: /* An incomplete multibyte sequence has been encountered in the input */
+				free(dstbuf);
+				throw_exception("An incomplete multibyte sequence has been encountered in the input");
+			default:
+				assert(!"Unknown libiconv error");
+				free(dstbuf);
+				throw_exception("Unknown libiconv error");
+			}
+		}
+		else if(! srcleft)
 		{
 			*dst = '\0';
 			return dstbuf;
 		}
-		dstpos = dst - dstbuf;
-		dstlen += 100;
-		dstbuf = realloc(dstbuf, dstlen);
-		dstleft += 100;
-		dst += dstpos;
 	}
+	assert(!"Should not happen");
 	free(dstbuf);
 	return NULL;
 }
