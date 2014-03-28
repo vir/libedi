@@ -271,12 +271,18 @@ static void parse_message_header(edi_segment_t * seg)
 	h.msg_agency  = msgid->composite.values[3];
 }
 
+static size_t err_offset;
+static char err_segment[101];
+
 int edi2xml_conv(const char * edi_text)
 {
 	edi_parser_t * p;
 	edi_interchange_t * ichg;
 	size_t i;
 	int rc = 0;
+
+	err_offset = 0;
+	*err_segment = '\0';
 
 	p = edi_parser_create(NULL);
 	ichg = edi_parser_parse(p, edi_text);
@@ -292,6 +298,7 @@ int edi2xml_conv(const char * edi_text)
 		{
 			edi_segment_t * seg = &ichg->segments[i];
 			const char * tag = seg->tag;
+			err_offset = seg->offset;
 			if(0 == strcmp(tag, "UNB")) { output("<X:interchange %s>\n", namespaces); }
 			if(0 == strcmp(tag, "UNG")) { output("<X:group>\n"); }
 			if(0 == strcmp(tag, "UNH"))
@@ -307,6 +314,8 @@ int edi2xml_conv(const char * edi_text)
 	}
 	else /* Our "catch" block */
 	{
+		strncpy(err_segment, edi_text + err_offset, sizeof(err_segment) - 1);
+		err_segment[sizeof(err_segment) - 1] = '\0';
 		rc = -1;
 		error("Exception: %s", edixml_excp_text);
 	}
@@ -334,7 +343,8 @@ char * edi2xml_conv2(const char * edi_text, const char * enc)
 	return r;
 }
 
-const char * edi2xml_error()
+void edi2xml_error(char ** ptr)
 {
-	return edixml_excp_text;
+	*ptr = malloc(strlen(edixml_excp_text) + strlen(err_segment) + 20);
+	sprintf(*ptr, "%s, segment offset %u: %s...", edixml_excp_text, err_offset, err_segment);
 }
