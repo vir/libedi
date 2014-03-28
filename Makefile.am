@@ -27,5 +27,5 @@
 
 EXTRA_DIST = README ChangeLog LICENSE
 
-SUBDIRS = include libedi libedistruct tests xml
+SUBDIRS = include libedi libedistruct libedixml tests xml
 

@@ -1,9 +1,16 @@
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include "libedixml.h"
 #include "output.h"
 #ifdef _MSC_VER
 # include <STDDEF.H>
 #endif
-#include <malloc.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+#else
+# include <malloc.h>
+#endif
 #include <string.h>
 #include "libedi.h"
 #include "libedistruct.h"

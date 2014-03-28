@@ -25,10 +25,19 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 AC_INIT(libedi, 1.0.2)
 AC_CONFIG_SRCDIR([libedi/parse.c])
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
+
+dnl http://gnu-autoconf.7623.n7.nabble.com/Why-is-this-perl-checking-code-not-working-for-me-td13061.html
+AC_DEFUN([AX_PROG_PERL_VERSION],
+	[AC_CACHE_CHECK([for Perl version $1 or later], [ax_cv_prog_perl_version],
+		[AS_IF(["$PERL" -e 'require $1;' >/dev/null 2>&1],
+		        [ax_cv_prog_perl_version=yes],
+		        [ax_cv_prog_perl_version=no])])
+	 AS_IF([test x"$ax_cv_prog_perl_version" = xyes], [$2], [$3])])
 
 CPPFLAGS="$CPPFLAGS -W -Wall -D_REENTRANT"
 export CPPFLAGS
@@ -63,11 +72,38 @@ else
 	use_pthread=no
 fi
 
+AC_CHECK_DECLS(
+	[O_BINARY],
+	,
+	[AC_DEFINE([O_BINARY], [0], [O_BINARY replacement])],
+	[[
+		#ifdef HAVE_FCNTL_H
+		#include <fcntl.h>
+		#endif
+	]]
+)
+
+AC_CHECK_HEADERS_ONCE([io.h])
+
+AC_MSG_CHECKING(for strndup)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_STRING_H
+				  #include <string.h>
+				  #else
+				  char *strndup (const char *s, size_t  n);
+				  #endif]],                      \
+			        [[const char *s = "test";
+				  (void) strndup (s, 3);]])], \
+	       [AC_DEFINE(HAVE_STRNDUP, 1, "Whether the strndup function is available") \
+	        AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
+
+AC_HEADER_STDC()
+
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
 include/Makefile
 libedi/Makefile
 libedistruct/Makefile
+libedixml/Makefile
 tests/Makefile
 xml/Makefile
 ])

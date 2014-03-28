@@ -3,13 +3,18 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <io.h>
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
 #include <string.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4996) /* The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _open. */
 #endif
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 //#define open _open
 
@@ -104,6 +109,7 @@ static int parse_xml_file(const char * fn, XML_StartElementHandler start, XML_En
 	return 0;
 }
 
+#ifndef HAVE_STRNDUP
 char * strndup(const char * s, int len)
 {
 	char * r = malloc(len + 1);
@@ -111,6 +117,7 @@ char * strndup(const char * s, int len)
 	r[len] = '\0';
 	return r;
 }
+#endif
 
 
 

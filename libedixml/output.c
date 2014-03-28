@@ -1,9 +1,15 @@
-//#include "edi2xml.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include "output.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <iconv.h>
-#include <malloc.h>
+#ifdef STDC_HEADERS
+# include <stdlib.h>
+#else
+# include <malloc.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
@@ -45,14 +51,18 @@ void output(const char * format, ...)
 	if(outbufptr)
 	{
 		int len = 0;
-		do {
-			if(outbufpos == outbufsize || len < 0)
+		int avail = 0;
+		for(;;) {
+			if(*outbufptr)
 			{
-				outbufsize += 1024;
-				*outbufptr = (char*)realloc(*outbufptr, outbufsize);
+				avail = outbufsize - outbufpos;
+				len = vsnprintf(*outbufptr + outbufpos, avail, format, ap);
+				if(len >= 0 && len < avail)
+					break;
 			}
-			len = vsnprintf(*outbufptr + outbufpos, outbufsize - outbufpos - 1, format, ap);
-		} while(len < 0);
+			outbufsize += 1024;
+			*outbufptr = (char*)realloc(*outbufptr, outbufsize);
+		}
 		outbufpos += len;
 	}
 	else
