@@ -22,3 +22,4 @@ typedef _w64 int        ssize_t;
 # define _CRT_NONSTDC_NO_WARNINGS
 #endif
 
+#define DATADIR ""
