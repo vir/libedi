@@ -350,4 +350,6 @@ void edi2xml_error(char ** ptr)
 	//snprintf(*ptr, len, "%s, segment offset %u: %s...", edixml_excp_text, err_offset, err_segment);
 	//(*ptr)[len] = '\0';
 	sprintf(*ptr, "%s, segment offset %u: %s...", edixml_excp_text, err_offset, err_segment);
+	free(edixml_excp_text);
+	edixml_excp_text = 0;
 }

@@ -99,7 +99,7 @@ char * do_conv(const char * src)
 				break;
 			case EILSEQ: /* An invalid multibyte sequence has been encountered in the input */
 				free(dstbuf);
-				throw_exception("An invalid multibyte sequence has been encountered in the input");
+				throw_exception("An invalid multibyte sequence: \"%s\"", src);
 			case EINVAL: /* An incomplete multibyte sequence has been encountered in the input */
 				free(dstbuf);
 				throw_exception("An incomplete multibyte sequence has been encountered in the input");

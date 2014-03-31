@@ -288,6 +288,10 @@
 			UniqueIdentifier="{7FD3067F-2621-4dbb-909A-06A0D41BC469}"
 			>
 			<File
+				RelativePath=".\asprintf.c"
+				>
+			</File>
+			<File
 				RelativePath="..\libedixml\conv.c"
 				>
 			</File>
@@ -309,6 +313,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{00FDBFBC-FAA6-4c33-961A-DC0D7A71CBD2}"
 			>
+			<File
+				RelativePath=".\asprintf.h"
+				>
+			</File>
 			<File
 				RelativePath="..\libedixml\excep.h"
 				>
