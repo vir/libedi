@@ -345,10 +345,10 @@ char * edi2xml_conv2(const char * edi_text, const char * enc)
 
 void edi2xml_error(char ** ptr)
 {
+	if(! edixml_excp_text)
+		*ptr = strdup("Unknown edi2xml error");
 	size_t len = strlen(edixml_excp_text) + strlen(err_segment) + 50;
 	*ptr = malloc(len);
-	//snprintf(*ptr, len, "%s, segment offset %u: %s...", edixml_excp_text, err_offset, err_segment);
-	//(*ptr)[len] = '\0';
 	sprintf(*ptr, "%s, segment offset %u: %s...", edixml_excp_text, err_offset, err_segment);
 	free(edixml_excp_text);
 	edixml_excp_text = 0;
